@@ -1,0 +1,133 @@
+/**
+ * Cart Context using React Context API
+ * Manages shopping cart state with localStorage persistence
+ */
+import { createContext, useContext, useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+
+const CartContext = createContext();
+
+export const CartProvider = ({ children }) => {
+    const [cart, setCart] = useState(() => {
+        const savedCart = localStorage.getItem('cart');
+        return savedCart ? JSON.parse(savedCart) : [];
+    });
+
+    // Sync to localStorage whenever cart changes
+    useEffect(() => {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }, [cart]);
+
+    // Add item to cart
+    const addToCart = (product, quantity = 1, selectedSize = null, selectedColor = null) => {
+        setCart(prevCart => {
+            const existingItem = prevCart.find(
+                item =>
+                    item.id === product.id &&
+                    item.selectedSize === selectedSize &&
+                    item.selectedColor === selectedColor
+            );
+
+            if (existingItem) {
+                // Update quantity
+                toast.success('Cart updated');
+                return prevCart.map(item =>
+                    item === existingItem
+                        ? { ...item, quantity: item.quantity + quantity }
+                        : item
+                );
+            }
+
+            // Add new item
+            toast.success('Added to cart');
+            return [...prevCart, {
+                ...product,
+                quantity,
+                selectedSize,
+                selectedColor,
+                addedAt: Date.now()
+            }];
+        });
+    };
+
+    // Remove item from cart
+    const removeFromCart = (productId, selectedSize, selectedColor) => {
+        setCart(prevCart =>
+            prevCart.filter(
+                item =>
+                    !(item.id === productId &&
+                        item.selectedSize === selectedSize &&
+                        item.selectedColor === selectedColor)
+            )
+        );
+        toast.success('Removed from cart');
+    };
+
+    // Update item quantity
+    const updateQuantity = (productId, selectedSize, selectedColor, quantity) => {
+        if (quantity < 1) return;
+
+        setCart(prevCart =>
+            prevCart.map(item =>
+                item.id === productId &&
+                    item.selectedSize === selectedSize &&
+                    item.selectedColor === selectedColor
+                    ? { ...item, quantity }
+                    : item
+            )
+        );
+    };
+
+    // Clear entire cart
+    const clearCart = () => {
+        setCart([]);
+        localStorage.removeItem('cart');
+        toast.success('Cart cleared');
+    };
+
+    // Get item count
+    const getItemCount = () => {
+        return cart.reduce((total, item) => total + item.quantity, 0);
+    };
+
+    // Calculate total price
+    const getTotal = () => {
+        return cart.reduce((total, item) => {
+            const price = item.discounted_price || item.original_price;
+            return total + (price * item.quantity);
+        }, 0);
+    };
+
+    // Check if product is in cart
+    const isInCart = (productId, selectedSize, selectedColor) => {
+        return cart.some(
+            item =>
+                item.id === productId &&
+                item.selectedSize === selectedSize &&
+                item.selectedColor === selectedColor
+        );
+    };
+
+    const value = {
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        getItemCount,
+        getTotal,
+        isInCart,
+    };
+
+    return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+};
+
+export const useCart = () => {
+    const context = useContext(CartContext);
+    if (!context) {
+        throw new Error('useCart must be used within CartProvider');
+    }
+    return context;
+};
+
+export default CartContext;
