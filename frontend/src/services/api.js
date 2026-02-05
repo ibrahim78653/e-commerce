@@ -24,9 +24,7 @@ api.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 // Response interceptor - handle errors and token refresh
@@ -35,36 +33,41 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // Handle 401 Unauthorized - try to refresh token
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
+            const refreshToken = localStorage.getItem('refresh_token');
 
-            try {
-                const refreshToken = localStorage.getItem('refresh_token');
-                if (refreshToken) {
+            if (refreshToken) {
+                try {
                     const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
                         refresh_token: refreshToken,
                     });
-
                     const { access_token } = response.data;
                     localStorage.setItem('access_token', access_token);
+                    api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
 
+                    // CRITICAL FIX: Update the original request's header before retrying
                     originalRequest.headers.Authorization = `Bearer ${access_token}`;
                     return api(originalRequest);
+                } catch (refreshError) {
+                    console.error("Refresh failed", refreshError);
                 }
-            } catch (refreshError) {
-                // Refresh failed - logout user
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
-                localStorage.removeItem('user');
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
+            }
+
+            // If we reach here, either no refresh token or refresh failed
+            localStorage.clear();
+            if (window.location.pathname.startsWith('/admin')) {
+                window.location.href = '/admin/login';
             }
         }
 
-        // Handle other errors
-        const message = error.response?.data?.detail || 'An error occurred';
-        toast.error(message);
+        const message = error.response?.data?.detail;
+        const errorMsg = Array.isArray(message) ? message[0].msg : (message || 'An error occurred');
+
+        // Don't show toast for 401s that we might be refreshing
+        if (error.response?.status !== 401) {
+            toast.error(errorMsg);
+        }
 
         return Promise.reject(error);
     }
@@ -111,6 +114,12 @@ export const ordersAPI = {
     createWhatsAppOrder: (data) => api.post('/orders/whatsapp', data),
     getAllAdmin: (params) => api.get('/admin/orders', { params }),
     updateStatus: (id, data) => api.put(`/admin/orders/${id}/status`, data),
+};
+
+// ==================== ADMIN USERS APIs ====================
+export const usersAPI = {
+    getAll: (params) => api.get('/admin/users', { params }),
+    toggleBlock: (id, blockStatus) => api.put(`/admin/users/${id}/block`, null, { params: { block_status: blockStatus } }),
 };
 
 export default api;

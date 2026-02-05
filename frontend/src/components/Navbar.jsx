@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, User, LogOut, Package, UserCircle } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, User, LogOut, Package, UserCircle, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import { useCart } from '../context/CartContext';
@@ -124,6 +124,16 @@ const Navbar = () => {
                                                 <User size={18} className="mr-2" />
                                                 Profile
                                             </Link>
+                                            {user?.role === 'admin' && (
+                                                <Link
+                                                    to="/admin"
+                                                    onClick={() => setUserMenuOpen(false)}
+                                                    className="flex items-center px-4 py-2 text-primary-600 font-bold hover:bg-primary-50"
+                                                >
+                                                    <LayoutDashboard size={18} className="mr-2" />
+                                                    Admin Portal
+                                                </Link>
+                                            )}
                                             <Link
                                                 to="/orders"
                                                 onClick={() => setUserMenuOpen(false)}
@@ -198,6 +208,15 @@ const Navbar = () => {
                                             {category.name}
                                         </Link>
                                     ))}
+                                    {isAuthenticated && user?.role === 'admin' && (
+                                        <Link
+                                            to="/admin"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className="block py-2 text-primary-600 font-bold"
+                                        >
+                                            Admin Portal
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>

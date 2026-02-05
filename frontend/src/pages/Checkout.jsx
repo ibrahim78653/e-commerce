@@ -232,7 +232,7 @@ const Checkout = () => {
                             <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Method</h2>
 
                             <div className="space-y-3">
-                                <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${paymentMethod === 'razorpay' ? 'border-primary-600 bg-primary-50' : 'border-gray-300'}">
+                                <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${paymentMethod === 'razorpay' ? 'border-primary-600 bg-primary-50' : 'border-gray-300'}`}>
                                     <input
                                         type="radio"
                                         name="payment"

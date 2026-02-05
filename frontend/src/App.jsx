@@ -22,7 +22,16 @@ import ProfilePage from './pages/ProfilePage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 
+import { useState, useEffect } from 'react';
+import useAuthStore from './store/authStore';
+
 function App() {
+    const { loadUser } = useAuthStore();
+
+    useEffect(() => {
+        loadUser();
+    }, [loadUser]);
+
     return (
         <BrowserRouter>
             <CartProvider>

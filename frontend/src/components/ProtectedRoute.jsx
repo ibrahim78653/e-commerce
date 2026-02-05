@@ -11,11 +11,13 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 
     if (!isAuthenticated) {
         // Redirect to login but save the attempted location
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        const targetLogin = adminOnly ? "/admin/login" : "/login";
+        return <Navigate to={targetLogin} state={{ from: location }} replace />;
     }
 
     if (adminOnly && user?.role !== 'admin') {
         // Not authorized for admin area - send to home
+        toast.error("Access denied: Admins only");
         return <Navigate to="/" replace />;
     }
 
