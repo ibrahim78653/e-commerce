@@ -46,14 +46,35 @@ class Product(Base):
     
     category = relationship("Category", back_populates="products")
     images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
+    color_variants = relationship("ProductColorVariant", back_populates="product", cascade="all, delete-orphan")
+
+class ProductColorVariant(Base):
+    """
+    Color variants for products - each variant has its own stock and images
+    """
+    __tablename__ = "product_color_variants"
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"))
+    color_name = Column(String)  # e.g., "Red", "Blue", "Black"
+    color_code = Column(String, nullable=True)  # Hex code for display, e.g., "#FF0000"
+    stock = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    show_in_carousel = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    product = relationship("Product", back_populates="color_variants")
+    images = relationship("ProductImage", back_populates="color_variant", cascade="all, delete-orphan")
 
 class ProductImage(Base):
     __tablename__ = "product_images"
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"))
+    color_variant_id = Column(Integer, ForeignKey("product_color_variants.id"), nullable=True)
     image_url = Column(String)
+    is_primary = Column(Boolean, default=False)  # Primary image for the variant/product
     
     product = relationship("Product", back_populates="images")
+    color_variant = relationship("ProductColorVariant", back_populates="images")
 
 class Order(Base):
     __tablename__ = "orders"
@@ -78,9 +99,13 @@ class OrderItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"))
     product_id = Column(Integer, ForeignKey("products.id"))
+    color_variant_id = Column(Integer, ForeignKey("product_color_variants.id"), nullable=True)
     product_name = Column(String)
+    selected_color = Column(String, nullable=True)  # Store color name for reference
+    selected_size = Column(String, nullable=True)  # Store size for reference
     price = Column(Float)
     quantity = Column(Integer)
     
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
+    color_variant = relationship("ProductColorVariant")

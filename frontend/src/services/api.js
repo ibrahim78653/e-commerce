@@ -96,6 +96,10 @@ export const productsAPI = {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
     },
+    // Color Variants
+    addColorVariant: (productId, data) => api.post(`/products/${productId}/variants`, data),
+    updateColorVariant: (productId, variantId, data) => api.put(`/products/${productId}/variants/${variantId}`, data),
+    deleteColorVariant: (productId, variantId) => api.delete(`/products/${productId}/variants/${variantId}`),
 };
 
 // ==================== CATEGORIES APIs ====================

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { productsAPI, categoriesAPI } from '../../services/api';
-import { Plus, Trash, Edit, Search, Filter } from 'lucide-react';
+import { Plus, Trash, Edit, Search, Filter, Eye, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import ProductDetailModal from '../../components/ProductDetailModal';
 
 const AdminProducts = () => {
     const [products, setProducts] = useState([]);
@@ -14,12 +15,14 @@ const AdminProducts = () => {
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [formData, setFormData] = useState({
         name: '', description: '', original_price: '', discounted_price: '',
-        stock: '', category_id: '', sizes: '', colors: '', image_urls: []
+        stock: '', category_id: '', sizes: '', colors: '', image_urls: [], images: []
     });
 
     const fetchProducts = async () => {
@@ -54,16 +57,35 @@ const AdminProducts = () => {
         }
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-            };
-            reader.readAsDataURL(file);
+    const handleFileChange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        setLoading(true);
+        try {
+            const uploadedUrls = [];
+            for (const file of files) {
+                const uploadRes = await productsAPI.uploadImage(file);
+                uploadedUrls.push(uploadRes.data.image_url);
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                image_urls: [...prev.image_urls, ...uploadedUrls]
+            }));
+            toast.success(`${files.length} images uploaded`);
+        } catch (error) {
+            toast.error("Failed to upload some images");
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const removeImage = (url) => {
+        setFormData(prev => ({
+            ...prev,
+            image_urls: prev.image_urls.filter(u => u !== url)
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -93,7 +115,7 @@ const AdminProducts = () => {
                 discounted_price: formData.discounted_price ? parseFloat(formData.discounted_price) : null,
                 stock: parseInt(formData.stock) || 0,
                 category_id: formData.category_id ? parseInt(formData.category_id) : null,
-                image_urls: imageUrls,
+                image_urls: formData.image_urls,
                 is_active: true
             };
 
@@ -139,7 +161,7 @@ const AdminProducts = () => {
             category_id: product.category_id,
             sizes: product.sizes || '',
             colors: product.colors || '',
-            image_urls: []
+            image_urls: product.images?.filter(img => !img.color_variant_id).map(img => img.image_url) || []
         });
 
         if (product.images && product.images.length > 0) {
@@ -217,6 +239,13 @@ const AdminProducts = () => {
                                     {p.is_active ? 'Active' : 'Inactive'}
                                 </td>
                                 <td className="px-6 py-4 text-right text-sm font-medium">
+                                    <button
+                                        onClick={() => { setSelectedProduct(p); setShowDetailModal(true); }}
+                                        className="text-green-600 hover:text-green-900 mr-4"
+                                        title="View Details & Manage Variants"
+                                    >
+                                        <Eye size={18} />
+                                    </button>
                                     <button onClick={() => openEditModal(p)} className="text-indigo-600 hover:text-indigo-900 mr-4">
                                         <Edit size={18} />
                                     </button>
@@ -285,13 +314,26 @@ const AdminProducts = () => {
                                     <input type="text" className="input" value={formData.colors} onChange={e => setFormData({ ...formData, colors: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Image</label>
-                                    <input type="file" accept="image/*" onChange={handleFileChange} className="input" />
-                                    {imagePreview && (
-                                        <div className="mt-2">
-                                            <img src={imagePreview} alt="Preview" className="h-20 w-20 object-cover rounded shadow" />
-                                        </div>
-                                    )}
+                                    <label className="block text-sm font-medium text-gray-700">Product Images</label>
+                                    <input type="file" accept="image/*" multiple onChange={handleFileChange} className="input" />
+                                    <div className="flex gap-2 mt-2 flex-wrap">
+                                        {formData.image_urls.map((url, idx) => (
+                                            <div key={idx} className="relative group">
+                                                <img
+                                                    src={url.startsWith('http') ? url : `http://localhost:8000${url}`}
+                                                    alt="Preview"
+                                                    className="h-20 w-20 object-cover rounded shadow border"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeImage(url)}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                 <div className="flex justify-end gap-3 mt-6">
                                     <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>
@@ -302,6 +344,15 @@ const AdminProducts = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Product Detail Modal with Color Variants */}
+            {showDetailModal && selectedProduct && (
+                <ProductDetailModal
+                    product={selectedProduct}
+                    onClose={() => { setShowDetailModal(false); setSelectedProduct(null); }}
+                    onUpdate={fetchProducts}
+                />
+            )}
         </div>
     );
 };

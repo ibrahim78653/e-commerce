@@ -41,7 +41,10 @@ const CartPage = () => {
                 {/* Cart Items */}
                 <div className="lg:col-span-2 space-y-4">
                     {cart.map((item) => {
-                        const imageUrl = item.images?.[0]?.image_url || '/placeholder.jpg';
+                        const variant = item.color_variants?.find(v => v.id === item.selectedVariantId);
+                        const variantImage = variant?.images?.find(img => img.is_primary)?.image_url || variant?.images?.[0]?.image_url;
+                        const imageUrl = variantImage || item.images?.find(img => img.is_primary)?.image_url || item.images?.[0]?.image_url || '/placeholder.jpg';
+
                         const fullImageUrl = imageUrl.startsWith('http')
                             ? imageUrl
                             : `http://localhost:8000${imageUrl}`;

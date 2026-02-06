@@ -45,7 +45,33 @@ class CategoryResponse(CategoryBase):
         from_attributes = True
 
 class ProductImageSchema(BaseModel):
+    id: Optional[int] = None
     image_url: str
+    color_variant_id: Optional[int] = None
+    is_primary: bool = False
+    class Config:
+        from_attributes = True
+
+class ColorVariantImageCreate(BaseModel):
+    image_url: str
+    is_primary: bool = False
+
+class ProductColorVariantCreate(BaseModel):
+    color_name: str
+    color_code: Optional[str] = None
+    stock: int = 0
+    is_active: bool = True
+    show_in_carousel: bool = False
+    images: List[ColorVariantImageCreate] = []
+
+class ProductColorVariantResponse(BaseModel):
+    id: int
+    color_name: str
+    color_code: Optional[str] = None
+    stock: int
+    is_active: bool
+    show_in_carousel: bool
+    images: List[ProductImageSchema] = []
     class Config:
         from_attributes = True
 
@@ -65,11 +91,13 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     image_urls: List[str] = []
+    color_variants: List[ProductColorVariantCreate] = []
 
 class ProductResponse(ProductBase):
     id: int
     category: Optional[CategoryResponse]
     images: List[ProductImageSchema] = []
+    color_variants: List[ProductColorVariantResponse] = []
     class Config:
         from_attributes = True
 
@@ -84,12 +112,17 @@ class ProductListResponse(BaseModel):
 class OrderItemCreate(BaseModel):
     product_id: int
     quantity: int
+    color_variant_id: Optional[int] = None
+    selected_color: Optional[str] = None
+    selected_size: Optional[str] = None
 
 class OrderItemResponse(BaseModel):
     product_id: int
     product_name: str
     price: float
     quantity: int
+    selected_color: Optional[str] = None
+    selected_size: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -98,6 +131,9 @@ class OrderCreate(BaseModel):
     customer_email: Optional[str] = None
     customer_phone: str
     shipping_address: str
+    shipping_city: Optional[str] = None
+    shipping_state: Optional[str] = None
+    shipping_pincode: Optional[str] = None
     payment_method: str
     items: List[OrderItemCreate]
 
@@ -132,8 +168,12 @@ class RazorpayPaymentVerify(BaseModel):
 # WhatsApp
 class WhatsAppOrderCreate(BaseModel):
     customer_name: str
+    customer_email: Optional[str] = None
     customer_phone: str
     shipping_address: str
+    shipping_city: Optional[str] = None
+    shipping_state: Optional[str] = None
+    shipping_pincode: Optional[str] = None
     items: List[OrderItemCreate]
 
 class WhatsAppOrderResponse(BaseModel):

@@ -3,7 +3,8 @@
  * Display product info, image gallery, and add to cart
  */
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Carousel } from 'react-bootstrap';
 import { ShoppingCart, Heart, Package, Truck, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { productsAPI } from '../services/api';
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast';
 
 const ProductDetail = () => {
     const { id } = useParams();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { addToCart } = useCart();
 
@@ -22,21 +24,43 @@ const ProductDetail = () => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState('');
     const [selectedColor, setSelectedColor] = useState('');
+    const [selectedVariant, setSelectedVariant] = useState(null);
     const [quantity, setQuantity] = useState(1);
+
+    const variantIdParam = searchParams.get('variant');
 
     useEffect(() => {
         const loadProduct = async () => {
             setLoading(true);
             try {
                 const response = await productsAPI.getById(id);
-                setProduct(response.data);
+                const fetchedProduct = response.data;
+                setProduct(fetchedProduct);
 
-                // Set default selections
-                const sizes = response.data.sizes?.split(',').map(s => s.trim()) || [];
-                const colors = response.data.colors?.split(',').map(c => c.trim()) || [];
+                // Handle variant pre-selection
+                if (fetchedProduct.color_variants && fetchedProduct.color_variants.length > 0) {
+                    let initialVariant = null;
 
+                    if (variantIdParam) {
+                        initialVariant = fetchedProduct.color_variants.find(v => v.id === parseInt(variantIdParam));
+                    }
+
+                    if (!initialVariant) {
+                        // Select first active variant by default
+                        initialVariant = fetchedProduct.color_variants.find(v => v.is_active) || fetchedProduct.color_variants[0];
+                    }
+
+                    setSelectedVariant(initialVariant);
+                    setSelectedColor(initialVariant.color_name);
+                } else {
+                    // Fallback to old color system
+                    const colors = fetchedProduct.colors?.split(',').map(c => c.trim()) || [];
+                    if (colors.length > 0) setSelectedColor(colors[0]);
+                }
+
+                // Set default size
+                const sizes = fetchedProduct.sizes?.split(',').map(s => s.trim()) || [];
                 if (sizes.length > 0) setSelectedSize(sizes[0]);
-                if (colors.length > 0) setSelectedColor(colors[0]);
             } catch (error) {
                 console.error('Failed to load product:', error);
                 toast.error('Product not found');
@@ -47,12 +71,30 @@ const ProductDetail = () => {
         };
 
         loadProduct();
-    }, [id, navigate]);
+    }, [id, navigate, variantIdParam]);
+
+    // Update selected variant when color changes
+    useEffect(() => {
+        if (product?.color_variants && selectedColor) {
+            const variant = product.color_variants.find(v => v.color_name === selectedColor);
+            if (variant) {
+                setSelectedVariant(variant);
+                setSelectedImage(0); // Reset to first image of the variant
+            }
+        }
+    }, [selectedColor, product]);
 
     const handleAddToCart = () => {
         if (!product) return;
 
-        addToCart(product, quantity, selectedSize, selectedColor);
+        // Create a cart item with variant information
+        const cartProduct = {
+            ...product,
+            selectedVariantId: selectedVariant?.id,
+            selectedVariantStock: selectedVariant?.stock
+        };
+
+        addToCart(cartProduct, quantity, selectedSize, selectedColor);
     };
 
     const handleBuyNow = () => {
@@ -85,44 +127,65 @@ const ProductDetail = () => {
         : 0;
 
     const sizes = product.sizes?.split(',').map(s => s.trim()) || [];
-    const colors = product.colors?.split(',').map(c => c.trim()) || [];
+
+    // Get current images based on selected variant or fallback to product images
+    const getCurrentImages = () => {
+        if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
+            return selectedVariant.images;
+        }
+        // Fallback to base product images (those without variant_id)
+        return product.images?.filter(img => !img.color_variant_id) || [];
+    };
+
+    const currentImages = getCurrentImages();
+    const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
+
+    // Get color options - prefer variants over old color string
+    const colorOptions = product.color_variants && product.color_variants.length > 0
+        ? product.color_variants.filter(v => v.is_active)
+        : (product.colors?.split(',').map(c => ({ color_name: c.trim() })) || []);
 
     return (
         <div className="container py-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 {/* Image Gallery */}
-                <div>
-                    {/* Main Image */}
-                    <motion.div
-                        key={selectedImage}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="bg-gray-100 rounded-2xl overflow-hidden mb-4"
+                <div className="product-carousel-container">
+                    <Carousel
+                        interval={null}
+                        indicators={currentImages.length > 1}
+                        controls={currentImages.length > 1}
+                        activeIndex={selectedImage}
+                        onSelect={(index) => setSelectedImage(index)}
+                        className="bg-gray-100 rounded-2xl overflow-hidden mb-4 shadow-sm"
                     >
-                        <img
-                            src={
-                                product.images?.[selectedImage]?.image_url?.startsWith('http')
-                                    ? product.images[selectedImage].image_url
-                                    : `http://localhost:8000${product.images?.[selectedImage]?.image_url || '/placeholder.jpg'}`
-                            }
-                            alt={product.name}
-                            className="w-full h-96 object-cover"
-                            onError={(e) => {
-                                e.target.src = 'https://via.placeholder.com/600x400?text=Product+Image';
-                            }}
-                        />
-                    </motion.div>
+                        {currentImages.map((image, index) => (
+                            <Carousel.Item key={index} className="h-[500px]">
+                                <img
+                                    src={
+                                        image.image_url?.startsWith('http')
+                                            ? image.image_url
+                                            : `http://localhost:8000${image.image_url || '/placeholder.jpg'}`
+                                    }
+                                    alt={`${product.name} ${index + 1}`}
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                        e.target.src = 'https://via.placeholder.com/600x400?text=Product+Image';
+                                    }}
+                                />
+                            </Carousel.Item>
+                        ))}
+                    </Carousel>
 
                     {/* Thumbnails */}
-                    {product.images && product.images.length > 1 && (
-                        <div className="grid grid-cols-3 gap-4">
-                            {product.images.map((image, index) => (
+                    {currentImages.length > 1 && (
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                            {currentImages.map((image, index) => (
                                 <button
                                     key={index}
                                     onClick={() => setSelectedImage(index)}
-                                    className={`rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
-                                            ? 'border-primary-600 ring-2 ring-primary-200'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                    className={`rounded-lg overflow-hidden border-2 transition-all h-20 ${selectedImage === index
+                                        ? 'border-primary-600 ring-2 ring-primary-200'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <img
@@ -131,8 +194,8 @@ const ProductDetail = () => {
                                                 ? image.image_url
                                                 : `http://localhost:8000${image.image_url}`
                                         }
-                                        alt={`${product.name} ${index + 1}`}
-                                        className="w-full h-24 object-cover"
+                                        alt={`${product.name} thumb ${index + 1}`}
+                                        className="w-full h-full object-cover"
                                     />
                                 </button>
                             ))}
@@ -141,14 +204,18 @@ const ProductDetail = () => {
                 </div>
 
                 {/* Product Info */}
-                <div>
+                <div className="space-y-6">
                     {/* Category */}
                     {product.category && (
-                        <p className="text-primary-600 font-medium mb-2">{product.category.name}</p>
+                        <span className="badge-category inline-block mb-2">
+                            {product.category.name}
+                        </span>
                     )}
 
                     {/* Title */}
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">{product.name}</h1>
+                    <h1 className="text-5xl font-display font-black text-gray-900 tracking-tight leading-tight">
+                        {product.name}
+                    </h1>
 
                     {/* Price */}
                     <div className="flex items-baseline gap-4 mb-6">
@@ -180,8 +247,8 @@ const ProductDetail = () => {
                                         key={size}
                                         onClick={() => setSelectedSize(size)}
                                         className={`px-6 py-2 rounded-lg border-2 font-medium transition-all ${selectedSize === size
-                                                ? 'border-primary-600 bg-primary-50 text-primary-600'
-                                                : 'border-gray-300 hover:border-gray-400'
+                                            ? 'border-primary-600 bg-primary-50 text-primary-600'
+                                            : 'border-gray-300 hover:border-gray-400'
                                             }`}
                                     >
                                         {size}
@@ -192,20 +259,29 @@ const ProductDetail = () => {
                     )}
 
                     {/* Color Selection */}
-                    {colors.length > 0 && (
+                    {colorOptions.length > 0 && (
                         <div className="mb-6">
                             <h3 className="font-semibold text-gray-900 mb-3">Select Color</h3>
-                            <div className="flex gap-2 flex-wrap">
-                                {colors.map((color) => (
+                            <div className="flex gap-3 flex-wrap">
+                                {colorOptions.map((colorOption) => (
                                     <button
-                                        key={color}
-                                        onClick={() => setSelectedColor(color)}
-                                        className={`px-6 py-2 rounded-lg border-2 font-medium transition-all ${selectedColor === color
-                                                ? 'border-primary-600 bg-primary-50 text-primary-600'
-                                                : 'border-gray-300 hover:border-gray-400'
+                                        key={colorOption.color_name}
+                                        onClick={() => setSelectedColor(colorOption.color_name)}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-medium transition-all ${selectedColor === colorOption.color_name
+                                            ? 'border-primary-600 bg-primary-50 text-primary-600 ring-2 ring-primary-200'
+                                            : 'border-gray-300 hover:border-gray-400'
                                             }`}
                                     >
-                                        {color}
+                                        {colorOption.color_code && (
+                                            <div
+                                                className="w-5 h-5 rounded-full border-2 border-gray-300"
+                                                style={{ backgroundColor: colorOption.color_code }}
+                                            />
+                                        )}
+                                        <span>{colorOption.color_name}</span>
+                                        {colorOption.stock !== undefined && (
+                                            <span className="text-xs text-gray-500">({colorOption.stock} left)</span>
+                                        )}
                                     </button>
                                 ))}
                             </div>
@@ -232,7 +308,7 @@ const ProductDetail = () => {
                                 </button>
                             </div>
                             <p className="text-gray-600">
-                                {product.stock} items available
+                                {currentStock} items available
                             </p>
                         </div>
                     </div>
@@ -245,7 +321,7 @@ const ProductDetail = () => {
                             className="flex-1"
                             icon={ShoppingCart}
                             onClick={handleAddToCart}
-                            disabled={product.stock === 0}
+                            disabled={currentStock === 0}
                         >
                             Add to Cart
                         </Button>
@@ -254,7 +330,7 @@ const ProductDetail = () => {
                             size="lg"
                             className="flex-1"
                             onClick={handleBuyNow}
-                            disabled={product.stock === 0}
+                            disabled={currentStock === 0}
                         >
                             Buy Now
                         </Button>

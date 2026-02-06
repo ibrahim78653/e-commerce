@@ -25,7 +25,8 @@ export const CartProvider = ({ children }) => {
                 item =>
                     item.id === product.id &&
                     item.selectedSize === selectedSize &&
-                    item.selectedColor === selectedColor
+                    item.selectedColor === selectedColor &&
+                    item.selectedVariantId === product.selectedVariantId
             );
 
             if (existingItem) {
@@ -45,6 +46,7 @@ export const CartProvider = ({ children }) => {
                 quantity,
                 selectedSize,
                 selectedColor,
+                selectedVariantId: product.selectedVariantId,
                 addedAt: Date.now()
             }];
         });

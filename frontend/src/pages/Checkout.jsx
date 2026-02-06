@@ -48,6 +48,7 @@ const Checkout = () => {
                     quantity: item.quantity,
                     selected_size: item.selectedSize,
                     selected_color: item.selectedColor,
+                    color_variant_id: item.selectedVariantId,
                 })),
             });
 
@@ -121,6 +122,7 @@ const Checkout = () => {
                     quantity: item.quantity,
                     selected_size: item.selectedSize,
                     selected_color: item.selectedColor,
+                    color_variant_id: item.selectedVariantId,
                 })),
             });
 

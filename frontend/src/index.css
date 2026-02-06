@@ -1,5 +1,5 @@
 /* Tailwind CSS directives */
-@import url('https://fonts.googleapis.com/css2?family:Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,6 +9,15 @@
 @layer base {
   * {
     @apply border-gray-200;
+    text-decoration: none !important;
+  }
+
+  a,
+  a:hover,
+  a:focus,
+  a:active {
+    text-decoration: none !important;
+    @apply no-underline;
   }
 
   html {
@@ -16,7 +25,8 @@
   }
 
   body {
-    @apply bg-white text-gray-900 font-sans antialiased;
+    @apply bg-white text-gray-900 font-sans antialiased selection:bg-primary-100 selection:text-primary-900;
+    text-decoration: none !important;
   }
 
   h1,
@@ -25,55 +35,77 @@
   h4,
   h5,
   h6 {
-    @apply font-display font-semibold;
+    @apply font-display font-semibold tracking-tight;
   }
 }
 
 /* Custom components */
 @layer components {
 
+  /* Glassmorphism */
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-gray-900/70 backdrop-blur-md border border-gray-800/20;
+  }
+
   /* Buttons */
   .btn {
-    @apply px-6 py-2.5 rounded-lg font-medium transition-all duration-200 inline-flex items-center justify-center gap-2;
+    @apply px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 inline-flex items-center justify-center gap-2;
   }
 
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #ef4444 0%, #ec4899 50%, #8b5cf6 100%);
+    @apply text-white border-0 shadow-lg shadow-red-500/25 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    background-size: 200% auto;
+  }
+
+  .btn-primary:hover {
+    background-position: right center;
+    @apply shadow-xl shadow-red-500/40 -translate-y-0.5;
+    filter: brightness(1.1);
   }
 
   .btn-secondary {
-    @apply bg-secondary-100 text-secondary-900 hover:bg-secondary-200 active:scale-95;
+    @apply bg-secondary-100 text-secondary-900 hover:bg-secondary-200 active:scale-95 border-0 rounded-xl;
   }
 
   .btn-outline {
-    @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-50 active:scale-95;
+    @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-50 active:scale-95 rounded-xl transition-all;
   }
 
   .btn-ghost {
-    @apply hover:bg-gray-100 text-gray-700 active:scale-95;
+    @apply hover:bg-gray-100 text-gray-700 active:scale-95 rounded-xl;
   }
 
   /* Input fields */
   .input {
-    @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+    @apply w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 focus:bg-white transition-all shadow-sm;
   }
 
   .input-error {
-    @apply border-red-500 focus:ring-red-500;
+    @apply border-red-500 focus:ring-red-500/50;
   }
 
   /* Cards */
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-300;
   }
 
   .card-hover {
-    @apply hover:shadow-md transition-shadow duration-200;
+    @apply hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-1;
   }
 
   /* Container */
   .container {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Category Badge */
+  .badge-category {
+    @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-50 text-primary-600 border border-primary-100;
   }
 }
 
@@ -83,11 +115,32 @@
     text-wrap: balance;
   }
 
-  .animation-delay-200 {
-    animation-delay: 200ms;
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-accent-500 to-indigo-600;
   }
 
-  .animation-delay-400 {
-    animation-delay: 400ms;
+  .bg-gradient-premium {
+    background: radial-gradient(circle at top right, #fee2e2, transparent),
+      radial-gradient(circle at bottom left, #e0e7ff, transparent),
+      #f8fafc;
   }
+}
+
+/* Animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }

@@ -22,26 +22,47 @@ def create_order(order_data: schemas.OrderCreate, db: Session = Depends(database
         if not product:
             raise HTTPException(status_code=404, detail=f"Product {item.product_id} not found")
         
-        if product.stock < item.quantity:
-            raise HTTPException(status_code=400, detail=f"Insufficient stock for {product.name}")
+        # Handle color variant stock
+        if item.color_variant_id:
+            variant = db.query(models.ProductColorVariant).filter(
+                models.ProductColorVariant.id == item.color_variant_id
+            ).first()
+            if not variant:
+                raise HTTPException(status_code=404, detail=f"Color variant not found")
+            if variant.stock < item.quantity:
+                raise HTTPException(status_code=400, detail=f"Insufficient stock for {product.name} - {variant.color_name}")
+            variant.stock -= item.quantity
+        else:
+            # Use product-level stock if no variant
+            if product.stock < item.quantity:
+                raise HTTPException(status_code=400, detail=f"Insufficient stock for {product.name}")
+            product.stock -= item.quantity
         
         price = product.discounted_price if product.discounted_price else product.original_price
         total += price * item.quantity
         
         items_to_create.append(models.OrderItem(
             product_id=product.id,
+            color_variant_id=item.color_variant_id,
             product_name=product.name,
+            selected_color=item.selected_color,
+            selected_size=item.selected_size,
             price=price,
             quantity=item.quantity
         ))
-        product.stock -= item.quantity
+
+    # Combine address fields
+    full_address = order_data.shipping_address
+    if order_data.shipping_city: full_address += f", {order_data.shipping_city}"
+    if order_data.shipping_state: full_address += f", {order_data.shipping_state}"
+    if order_data.shipping_pincode: full_address += f" - {order_data.shipping_pincode}"
 
     new_order = models.Order(
         user_id=current_user.id if current_user else None,
         customer_name=order_data.customer_name,
         customer_email=order_data.customer_email,
         customer_phone=order_data.customer_phone,
-        address=order_data.shipping_address,
+        address=full_address,
         total_amount=total,
         payment_method=order_data.payment_method
     )
@@ -101,11 +122,32 @@ def verify_payment(data: schemas.RazorpayPaymentVerify, db: Session = Depends(da
 
 @router.post("/orders/whatsapp", response_model=schemas.WhatsAppOrderResponse)
 def create_whatsapp_order(order_data: schemas.WhatsAppOrderCreate, db: Session = Depends(database.get_db), current_user: Optional[models.User] = Depends(auth.get_current_user)):
-    standard_data = schemas.OrderCreate(customer_name=order_data.customer_name, customer_phone=order_data.customer_phone, shipping_address=order_data.shipping_address, payment_method="whatsapp", items=order_data.items)
+    standard_data = schemas.OrderCreate(
+        customer_name=order_data.customer_name, 
+        customer_email=order_data.customer_email,
+        customer_phone=order_data.customer_phone, 
+        shipping_address=order_data.shipping_address,
+        shipping_city=order_data.shipping_city,
+        shipping_state=order_data.shipping_state,
+        shipping_pincode=order_data.shipping_pincode,
+        payment_method="whatsapp", 
+        items=order_data.items
+    )
     order = create_order(standard_data, db, current_user)
-    msg = f"New Order #{order.id}\nCustomer: {order.customer_name}\nTotal: {order.total_amount}\nItems:\n"
+    msg = f"🛍️ *New Order #{order.id}*\n\n"
+    msg += f"👤 *Customer:* {order.customer_name}\n"
+    msg += f"📞 *Phone:* {order.customer_phone}\n"
+    msg += f"📍 *Shipping Address:* {order.address}\n\n"
+    msg += f"💰 *Total Amount:* ₹{order.total_amount}\n\n"
+    msg += f"📦 *Items:*\n"
+    
     for item in order.items:
-        msg += f"- {item.product_name} x {item.quantity}\n"
+        details = []
+        if item.selected_color: details.append(f"Color: {item.selected_color}")
+        if item.selected_size: details.append(f"Size: {item.selected_size}")
+        detail_str = f" ({', '.join(details)})" if details else ""
+        
+        msg += f"• {item.product_name} x {item.quantity}{detail_str}\n"
     whatsapp_url = f"https://wa.me/{settings.WHATSAPP_BUSINESS_NUMBER}?text={quote(msg)}"
     return {"order_id": order.id, "whatsapp_url": whatsapp_url, "message": msg}
 

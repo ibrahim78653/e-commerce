@@ -90,18 +90,22 @@ const Home = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <div className="bg-gradient-to-r from-primary-600 to-accent-600 text-white py-16">
-                <div className="container">
+            <div className="bg-gradient-premium py-20 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-10 left-10 w-64 h-64 bg-primary-300 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent-300 rounded-full blur-3xl animate-pulse delay-700"></div>
+                </div>
+                <div className="container relative z-10">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="text-center"
                     >
-                        <h1 className="text-5xl font-display font-bold mb-4">
-                            Burhani Collection
+                        <h1 className="text-6xl md:text-7xl font-display font-black mb-6 animate-float">
+                            <span className="text-gradient">Burhani Collection</span>
                         </h1>
-                        <p className="text-xl text-white/90 mb-8">
-                            Premium Quality Fashion for Everyone
+                        <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto font-medium">
+                            Experience the pinnacle of premium fashion. Curated collections for those who appreciate quality and style.
                         </p>
 
                         {/* Search Bar */}

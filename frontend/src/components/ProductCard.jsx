@@ -2,14 +2,17 @@
  * Product Card Component
  * Displays product with image, info, and add to cart action
  */
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import Button from './ui/Button';
+import VariantCarousel from './ui/VariantCarousel';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
+    const [activeVariant, setActiveVariant] = useState(null);
 
     const price = product.discounted_price || product.original_price;
     const hasDiscount = product.discounted_price && product.discounted_price < product.original_price;
@@ -17,6 +20,15 @@ const ProductCard = ({ product }) => {
     // Get first image or placeholder
     const imageUrl = product.images?.[0]?.image_url || '/placeholder.jpg';
     const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `http://localhost:8000${imageUrl}`;
+
+    const carouselVariants = product.color_variants?.filter(v => v.show_in_carousel && v.images?.length > 0) || [];
+    const totalVariantImages = carouselVariants.reduce((sum, v) => sum + (v.images?.length || 0), 0);
+    const baseImages = product.images?.filter(img => !img.color_variant_id) || [];
+    const hasCarousel = totalVariantImages > 1 || baseImages.length > 1;
+
+    const productUrl = activeVariant
+        ? `/product/${product.id}?variant=${activeVariant.id}`
+        : `/product/${product.id}`;
 
     const handleAddToCart = (e) => {
         e.preventDefault();
@@ -40,17 +52,26 @@ const ProductCard = ({ product }) => {
             transition={{ duration: 0.2 }}
             className="group"
         >
-            <Link to={`/product/${product.id}`} className="card card-hover block overflow-hidden p-0">
-                {/* Image */}
-                <div className="relative overflow-hidden bg-gray-100">
-                    <img
-                        src={fullImageUrl}
-                        alt={product.name}
-                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                            e.target.src = 'https://via.placeholder.com/400x300?text=Product+Image';
-                        }}
-                    />
+            <Link to={productUrl} className="card card-hover block overflow-hidden p-0">
+                {/* Image / Carousel */}
+                <div className="relative overflow-hidden bg-gray-100 h-64">
+                    {hasCarousel ? (
+                        <VariantCarousel
+                            variants={product.color_variants}
+                            images={baseImages}
+                            productName={product.name}
+                            onVariantChange={setActiveVariant}
+                        />
+                    ) : (
+                        <img
+                            src={fullImageUrl}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/400x300?text=Product+Image';
+                            }}
+                        />
+                    )}
 
                     {/* Badges */}
                     <div className="absolute top-3 left-3 flex flex-col gap-2">
