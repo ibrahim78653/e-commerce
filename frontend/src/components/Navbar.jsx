@@ -2,12 +2,13 @@
  * Navbar Component
  * Responsive navigation with search, cart, and user menu
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, Menu, X, User, LogOut, Package, UserCircle, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import { useCart } from '../context/CartContext';
+import { categoriesAPI } from '../services/api';
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -16,8 +17,21 @@ const Navbar = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [categories, setCategories] = useState([]);
 
     const itemCount = getItemCount();
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await categoriesAPI.getAll();
+                setCategories(response.data);
+            } catch (error) {
+                console.error('Failed to fetch categories:', error);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -32,12 +46,6 @@ const Navbar = () => {
         setUserMenuOpen(false);
         navigate('/');
     };
-
-    const categories = [
-        { name: 'Ladies Wear', path: '/category/ladies' },
-        { name: 'Gents Wear', path: '/category/gents' },
-        { name: 'Kids Wear', path: '/category/kids' },
-    ];
 
     return (
         <nav className="glass shadow-sm sticky top-0 z-50">
@@ -57,28 +65,14 @@ const Navbar = () => {
                     <div className="hidden md:flex items-center space-x-6">
                         {categories.map((category) => (
                             <Link
-                                key={category.path}
-                                to={category.path}
+                                key={category.id}
+                                to={`/?category_id=${category.id}`}
                                 className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
                             >
                                 {category.name}
                             </Link>
                         ))}
                     </div>
-
-                    {/* Search Bar */}
-                    <form onSubmit={handleSearch} className="hidden lg:flex items-center flex-1 max-w-md mx-6">
-                        <div className="relative w-full">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search products..."
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            />
-                        </div>
-                    </form>
 
                     {/* Right Actions */}
                     <div className="flex items-center space-x-4">
@@ -182,26 +176,12 @@ const Navbar = () => {
                             className="md:hidden border-t border-gray-200 overflow-hidden"
                         >
                             <div className="py-4 space-y-4">
-                                {/* Mobile Search */}
-                                <form onSubmit={handleSearch} className="px-4">
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                                        <input
-                                            type="text"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            placeholder="Search products..."
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-                                </form>
-
                                 {/* Mobile Navigation */}
                                 <div className="space-y-2 px-4">
                                     {categories.map((category) => (
                                         <Link
-                                            key={category.path}
-                                            to={category.path}
+                                            key={category.id}
+                                            to={`/?category_id=${category.id}`}
                                             onClick={() => setMobileMenuOpen(false)}
                                             className="block py-2 text-gray-700 hover:text-primary-600 font-medium"
                                         >
@@ -224,6 +204,7 @@ const Navbar = () => {
                 </AnimatePresence>
             </div>
         </nav>
+
     );
 };
 

@@ -19,11 +19,23 @@ const Home = () => {
 
     const [filters, setFilters] = useState({
         search: searchParams.get('search') || '',
-        category_id: searchParams.get('category') || '',
+        category_id: searchParams.get('category_id') || '',
         sort_by: searchParams.get('sort') || 'created_at',
         sort_order: searchParams.get('order') || 'desc',
         is_featured: searchParams.get('featured') === 'true' || null,
     });
+
+    // Sync search params to filters
+    useEffect(() => {
+        setFilters({
+            search: searchParams.get('search') || '',
+            category_id: searchParams.get('category_id') || '',
+            sort_by: searchParams.get('sort') || 'created_at',
+            sort_order: searchParams.get('order') || 'desc',
+            is_featured: searchParams.get('featured') === 'true' || null,
+        });
+        setPagination(prev => ({ ...prev, page: 1 }));
+    }, [searchParams]);
 
     // Fetch categories
     useEffect(() => {
