@@ -11,11 +11,12 @@ alembic
 # Authentication & Security
 python-jose[cryptography]
 passlib[bcrypt]
-bcrypt
+bcrypt==4.0.1
 
 # Environment & Configuration
 pydantic
 pydantic-settings
+email-validator
 python-dotenv
 
 # Payment Gateway

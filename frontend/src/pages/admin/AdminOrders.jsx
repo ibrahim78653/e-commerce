@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ordersAPI } from '../../services/api';
 import { Package, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -7,6 +8,7 @@ const AdminOrders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
     const [filterStatus, setFilterStatus] = useState('all');
+    const navigate = useNavigate();
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -25,7 +27,8 @@ const AdminOrders = () => {
         fetchOrders();
     }, []);
 
-    const handleStatusUpdate = async (id, newStatus) => {
+    const handleStatusUpdate = async (e, id, newStatus) => {
+        e.stopPropagation(); // Prevent row click
         try {
             await ordersAPI.updateStatus(id, { status: newStatus });
             setOrders(orders.map(o => o.id === id ? { ...o, status: newStatus } : o));
@@ -71,7 +74,11 @@ const AdminOrders = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         {filteredOrders.map((order) => (
-                            <tr key={order.id}>
+                            <tr
+                                key={order.id}
+                                onClick={() => navigate(`/admin/orders/${order.id}`)}
+                                className="hover:bg-gray-50 cursor-pointer transition-colors"
+                            >
                                 <td className="px-6 py-4 text-sm font-medium text-gray-900">#{order.id}</td>
                                 <td className="px-6 py-4 text-sm text-gray-500">
                                     <div className="font-medium text-gray-900">{order.customer_name}</div>
@@ -83,8 +90,8 @@ const AdminOrders = () => {
                                 <td className="px-6 py-4 text-sm text-gray-900">₹{order.total_amount}</td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                'bg-yellow-100 text-yellow-800'
+                                        order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                            'bg-yellow-100 text-yellow-800'
                                         }`}>
                                         {order.status}
                                     </span>
@@ -93,7 +100,8 @@ const AdminOrders = () => {
                                     <select
                                         className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                                         value={order.status}
-                                        onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onChange={(e) => handleStatusUpdate(e, order.id, e.target.value)}
                                     >
                                         <option value="pending">Pending</option>
                                         <option value="confirmed">Confirmed</option>

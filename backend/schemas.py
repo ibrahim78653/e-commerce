@@ -140,6 +140,9 @@ class OrderCreate(BaseModel):
 class OrderResponse(BaseModel):
     id: int
     customer_name: str
+    customer_email: Optional[str] = None
+    customer_phone: str
+    address: str
     total_amount: float
     status: str
     payment_method: str

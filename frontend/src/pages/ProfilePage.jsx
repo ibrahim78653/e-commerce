@@ -3,6 +3,7 @@
  * Display and edit user profile information
  */
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Lock, Save } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import useAuthStore from '../store/authStore';
@@ -13,6 +14,7 @@ import Modal from '../components/ui/Modal';
 import toast from 'react-hot-toast';
 
 const ProfilePage = () => {
+    const navigate = useNavigate();
     const { user, updateUser } = useAuthStore();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
@@ -149,13 +151,16 @@ const ProfilePage = () => {
                     <div className="card">
                         <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
                         <div className="space-y-2">
-                            <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button
+                                onClick={() => navigate('/orders')}
+                                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
                                 <p className="font-medium text-gray-900">Order History</p>
                                 <p className="text-sm text-gray-600">View all your orders</p>
                             </button>
-                            <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-not-allowed opacity-50">
                                 <p className="font-medium text-gray-900">Addresses</p>
-                                <p className="text-sm text-gray-600">Manage shipping addresses</p>
+                                <p className="text-sm text-gray-600">Coming soon</p>
                             </button>
                         </div>
                     </div>

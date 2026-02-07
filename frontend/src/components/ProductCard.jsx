@@ -131,7 +131,7 @@ const ProductCard = ({ product }) => {
                                     ₹{price.toFixed(2)}
                                 </span>
                                 {hasDiscount && (
-                                    <span className="text-sm text-gray-400 line-through">
+                                    <span className="text-sm text-gray-500 line-through decoration-red-500 decoration-1 opacity-80">
                                         ₹{product.original_price.toFixed(2)}
                                     </span>
                                 )}

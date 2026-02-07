@@ -1,14 +1,9 @@
-/**
- * Navbar Component
- * Responsive navigation with search, cart, and user menu
- */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, User, LogOut, Package, UserCircle, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, LogOut, Package, UserCircle, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import { useCart } from '../context/CartContext';
-import { categoriesAPI } from '../services/api';
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -16,36 +11,20 @@ const Navbar = () => {
     const { getItemCount } = useCart();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [categories, setCategories] = useState([]);
 
     const itemCount = getItemCount();
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await categoriesAPI.getAll();
-                setCategories(response.data);
-            } catch (error) {
-                console.error('Failed to fetch categories:', error);
-            }
-        };
-        fetchCategories();
-    }, []);
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            navigate(`/?search=${encodeURIComponent(searchQuery)}`);
-            setSearchQuery('');
-        }
-    };
 
     const handleLogout = async () => {
         await logout();
         setUserMenuOpen(false);
         navigate('/');
     };
+
+    const categories = [
+        { name: 'Ladies Wear', path: '/?category_id=1' },
+        { name: 'Gents Wear', path: '/?category_id=2' },
+        { name: 'Kids Wear', path: '/?category_id=3' },
+    ];
 
     return (
         <nav className="glass shadow-sm sticky top-0 z-50">
@@ -65,8 +44,8 @@ const Navbar = () => {
                     <div className="hidden md:flex items-center space-x-6">
                         {categories.map((category) => (
                             <Link
-                                key={category.id}
-                                to={`/?category_id=${category.id}`}
+                                key={category.path}
+                                to={category.path}
                                 className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
                             >
                                 {category.name}
@@ -180,8 +159,8 @@ const Navbar = () => {
                                 <div className="space-y-2 px-4">
                                     {categories.map((category) => (
                                         <Link
-                                            key={category.id}
-                                            to={`/?category_id=${category.id}`}
+                                            key={category.path}
+                                            to={category.path}
                                             onClick={() => setMobileMenuOpen(false)}
                                             className="block py-2 text-gray-700 hover:text-primary-600 font-medium"
                                         >
@@ -204,7 +183,6 @@ const Navbar = () => {
                 </AnimatePresence>
             </div>
         </nav>
-
     );
 };
 

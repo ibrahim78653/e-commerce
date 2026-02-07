@@ -32,7 +32,8 @@ const OrdersPage = () => {
     };
 
     const getStatusIcon = (status) => {
-        switch (status) {
+        const s = status?.toUpperCase();
+        switch (s) {
             case 'PENDING':
                 return <Clock className="text-yellow-500" size={20} />;
             case 'CONFIRMED':
@@ -49,7 +50,8 @@ const OrdersPage = () => {
     };
 
     const getStatusColor = (status) => {
-        switch (status) {
+        const s = status?.toUpperCase();
+        switch (s) {
             case 'PENDING':
                 return 'bg-yellow-100 text-yellow-800';
             case 'CONFIRMED':
@@ -135,7 +137,7 @@ const OrdersPage = () => {
 
                             <div className="text-right">
                                 <p className="text-2xl font-bold text-gray-900">
-                                    ₹{order.final_amount.toFixed(2)}
+                                    ₹{(order.total_amount || 0).toFixed(2)}
                                 </p>
                                 <p className="text-sm text-gray-600">
                                     {order.items?.length || 0} item{order.items?.length !== 1 ? 's' : ''}
@@ -157,7 +159,7 @@ const OrdersPage = () => {
                                         </p>
                                     </div>
                                     <p className="font-semibold text-gray-900">
-                                        ₹{item.total_price.toFixed(2)}
+                                        ₹{(item.price * item.quantity).toFixed(2)}
                                     </p>
                                 </div>
                             ))}
@@ -174,10 +176,7 @@ const OrdersPage = () => {
                             <p className="text-sm font-medium text-gray-700 mb-1">Shipping Address</p>
                             <p className="text-sm text-gray-600">
                                 {order.customer_name}<br />
-                                {order.shipping_address}
-                                {order.shipping_city && `, ${order.shipping_city}`}
-                                {order.shipping_state && `, ${order.shipping_state}`}
-                                {order.shipping_pincode && ` - ${order.shipping_pincode}`}
+                                {order.address}
                             </p>
                         </div>
 

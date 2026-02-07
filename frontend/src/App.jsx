@@ -18,9 +18,11 @@ import Checkout from './pages/Checkout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import OrdersPage from './pages/OrdersPage';
+import OrderDetail from './pages/OrderDetail';
 import ProfilePage from './pages/ProfilePage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 
 import { useState, useEffect } from 'react';
 import useAuthStore from './store/authStore';
@@ -56,6 +58,11 @@ function App() {
                                 <OrdersPage />
                             </ProtectedRoute>
                         } />
+                        <Route path="/orders/:id" element={
+                            <ProtectedRoute>
+                                <OrderDetail />
+                            </ProtectedRoute>
+                        } />
                         <Route path="/profile" element={
                             <ProtectedRoute>
                                 <ProfilePage />
@@ -67,6 +74,11 @@ function App() {
                         <Route path="/admin" element={
                             <ProtectedRoute adminOnly>
                                 <AdminDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/admin/orders/:id" element={
+                            <ProtectedRoute adminOnly>
+                                <AdminOrderDetail />
                             </ProtectedRoute>
                         } />
                     </Routes>
