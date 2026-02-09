@@ -10,9 +10,11 @@ import Button from '../components/ui/Button';
 
 const CartPage = () => {
     const navigate = useNavigate();
-    const { cart, removeFromCart, updateQuantity, getTotal, clearCart } = useCart();
+    const { cart, removeFromCart, updateQuantity, getTotal, getShippingCost, getGrandTotal, clearCart } = useCart();
 
     const total = getTotal();
+    const shippingCost = getShippingCost();
+    const grandTotal = getGrandTotal();
 
     if (cart.length === 0) {
         return (
@@ -156,12 +158,21 @@ const CartPage = () => {
                             </div>
                             <div className="flex justify-between text-gray-700">
                                 <span>Shipping</span>
-                                <span className="font-medium text-green-600">FREE</span>
+                                {shippingCost === 0 ? (
+                                    <span className="font-medium text-green-600">FREE</span>
+                                ) : (
+                                    <span className="font-medium text-gray-900">₹{shippingCost}</span>
+                                )}
                             </div>
+                            {total <= 1200 && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                    Full free shipping on orders above ₹1200
+                                </div>
+                            )}
                             <hr className="my-4" />
                             <div className="flex justify-between text-xl font-bold text-gray-900">
                                 <span>Total</span>
-                                <span>₹{total.toFixed(2)}</span>
+                                <span>₹{grandTotal.toFixed(2)}</span>
                             </div>
                         </div>
 

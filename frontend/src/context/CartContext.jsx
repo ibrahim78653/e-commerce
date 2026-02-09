@@ -100,7 +100,20 @@ export const CartProvider = ({ children }) => {
         }, 0);
     };
 
-    // Check if product is in cart
+    // Calculate shipping cost
+    const getShippingCost = () => {
+        const total = getTotal();
+        if (total === 0) return 0;
+        if (total > 1200) return 0;
+        if (total >= 700) return 30;
+        return 50;
+    };
+
+    // Calculate grand total (subtotal + shipping)
+    const getGrandTotal = () => {
+        return getTotal() + getShippingCost();
+    };
+
     const isInCart = (productId, selectedSize, selectedColor) => {
         return cart.some(
             item =>
@@ -118,6 +131,8 @@ export const CartProvider = ({ children }) => {
         clearCart,
         getItemCount,
         getTotal,
+        getShippingCost,
+        getGrandTotal,
         isInCart,
     };
 

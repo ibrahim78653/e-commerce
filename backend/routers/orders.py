@@ -41,6 +41,7 @@ def create_order(order_data: schemas.OrderCreate, db: Session = Depends(database
         price = product.discounted_price if product.discounted_price else product.original_price
         total += price * item.quantity
         
+        
         items_to_create.append(models.OrderItem(
             product_id=product.id,
             color_variant_id=item.color_variant_id,
@@ -50,6 +51,15 @@ def create_order(order_data: schemas.OrderCreate, db: Session = Depends(database
             price=price,
             quantity=item.quantity
         ))
+
+    # Calculate shipping cost
+    shipping_cost = 0
+    if total < 700 and total > 0:
+        shipping_cost = 50
+    elif total >= 700 and total <= 1200:
+        shipping_cost = 30
+    
+    grand_total = total + shipping_cost
 
     # Combine address fields
     full_address = order_data.shipping_address
@@ -63,7 +73,7 @@ def create_order(order_data: schemas.OrderCreate, db: Session = Depends(database
         customer_email=order_data.customer_email,
         customer_phone=order_data.customer_phone,
         address=full_address,
-        total_amount=total,
+        total_amount=grand_total,
         payment_method=order_data.payment_method
     )
     db.add(new_order)

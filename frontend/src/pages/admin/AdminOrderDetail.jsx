@@ -58,8 +58,8 @@ const AdminOrderDetail = () => {
                         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                             Order #{order.id}
                             <span className={`px-3 py-1 text-sm font-semibold rounded-full ${order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                    order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                        'bg-yellow-100 text-yellow-800'
+                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                    'bg-yellow-100 text-yellow-800'
                                 }`}>
                                 {order.status.toUpperCase()}
                             </span>
@@ -188,10 +188,22 @@ const AdminOrderDetail = () => {
                                     </tr>
                                 ))}
                             </tbody>
-                            <tfoot className="bg-gray-50">
+                            <tfoot className="bg-gray-50 border-t border-gray-200">
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-4 text-right font-bold text-gray-900">Total</td>
-                                    <td className="px-6 py-4 text-right font-bold text-gray-900 text-lg">
+                                    <td colSpan="5" className="px-6 py-3 text-right font-medium text-gray-500">Subtotal</td>
+                                    <td className="px-6 py-3 text-right font-medium text-gray-900">
+                                        ₹{order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-3 text-right font-medium text-gray-500">Shipping</td>
+                                    <td className="px-6 py-3 text-right font-medium text-gray-900">
+                                        ₹{(order.total_amount - order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2)}
+                                    </td>
+                                </tr>
+                                <tr className="bg-gray-100">
+                                    <td colSpan="5" className="px-6 py-4 text-right font-bold text-gray-900 text-lg">Total Amount</td>
+                                    <td className="px-6 py-4 text-right font-bold text-primary-600 text-lg">
                                         ₹{order.total_amount.toFixed(2)}
                                     </td>
                                 </tr>

@@ -347,7 +347,7 @@ const ProductDetail = () => {
                         </div>
                         <div className="text-center">
                             <Truck className="mx-auto mb-2 text-primary-600" size={32} />
-                            <p className="text-sm font-medium text-gray-700">Free Shipping</p>
+                            <p className="text-sm font-medium text-gray-700">Minimum Shipping</p>
                         </div>
                         <div className="text-center">
                             <Shield className="mx-auto mb-2 text-primary-600" size={32} />

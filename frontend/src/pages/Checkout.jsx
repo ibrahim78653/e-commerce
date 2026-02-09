@@ -15,7 +15,7 @@ import toast from 'react-hot-toast';
 
 const Checkout = () => {
     const navigate = useNavigate();
-    const { cart, getTotal, clearCart } = useCart();
+    const { cart, getTotal, getShippingCost, getGrandTotal, clearCart } = useCart();
     const { user, isAuthenticated } = useAuthStore();
     const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' or 'whatsapp'
     const [isProcessing, setIsProcessing] = useState(false);
@@ -29,6 +29,8 @@ const Checkout = () => {
     });
 
     const total = getTotal();
+    const shippingCost = getShippingCost();
+    const grandTotal = getGrandTotal();
 
     if (cart.length === 0) {
         navigate('/cart');
@@ -57,7 +59,7 @@ const Checkout = () => {
             // Create Razorpay order
             const razorpayResponse = await ordersAPI.createRazorpayOrder({
                 order_id: order.id,
-                amount: total,
+                amount: grandTotal,
             });
 
             const { razorpay_order_id, key_id } = razorpayResponse.data;
@@ -65,7 +67,7 @@ const Checkout = () => {
             // Initialize Razorpay
             const options = {
                 key: key_id || import.meta.env.VITE_RAZORPAY_KEY_ID,
-                amount: total * 100,
+                amount: grandTotal * 100,
                 currency: 'INR',
                 name: 'Burhani Collection',
                 description: `Order #${order.id}`,
@@ -314,12 +316,16 @@ const Checkout = () => {
                             </div>
                             <div className="flex justify-between text-gray-700">
                                 <span>Shipping</span>
-                                <span className="text-green-600 font-medium">FREE</span>
+                                {shippingCost === 0 ? (
+                                    <span className="text-green-600 font-medium">FREE</span>
+                                ) : (
+                                    <span className="font-medium text-gray-900">₹{shippingCost.toFixed(2)}</span>
+                                )}
                             </div>
                             <hr className="my-2" />
                             <div className="flex justify-between text-xl font-bold text-gray-900">
                                 <span>Total</span>
-                                <span>₹{total.toFixed(2)}</span>
+                                <span>₹{grandTotal.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

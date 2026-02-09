@@ -195,11 +195,13 @@ const OrderDetail = () => {
                         <div className="space-y-4">
                             <div className="flex justify-between text-gray-600">
                                 <span>Subtotal</span>
-                                <span>₹{order.total_amount.toFixed(2)}</span>
+                                <span>₹{(order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-gray-600">
                                 <span>Shipping</span>
-                                <span className="text-green-600 font-medium">FREE</span>
+                                <span className="font-medium">
+                                    ₹{(order.total_amount - order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2)}
+                                </span>
                             </div>
                             <hr className="border-gray-200" />
                             <div className="flex justify-between text-2xl font-bold text-gray-900">
