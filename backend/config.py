@@ -42,11 +42,14 @@ class Settings(BaseSettings):
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Any) -> List[str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+        if isinstance(v, str):
+            # If it's a string like '["a", "b"]', strip brackets first
+            v = v.strip().lstrip("[").rstrip("]")
+            # Split by comma and clean each item
+            return [i.strip().strip('"').strip("'") for i in v.split(",") if i.strip()]
+        elif isinstance(v, list):
+            return [str(i).strip().strip('"').strip("'") for i in v]
+        return v
     
     # Razorpay (Payment Gateway)
     RAZORPAY_KEY_ID: str = ""  # Public key
