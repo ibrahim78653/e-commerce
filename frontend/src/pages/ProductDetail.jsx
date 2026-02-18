@@ -12,6 +12,8 @@ import { useCart } from '../context/CartContext';
 import Button from '../components/ui/Button';
 import Skeleton from '../components/ui/Skeleton';
 import toast from 'react-hot-toast';
+import CONFIG from '../config';
+
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -164,7 +166,7 @@ const ProductDetail = () => {
                                     src={
                                         image.image_url?.startsWith('http')
                                             ? image.image_url
-                                            : `http://localhost:8000${image.image_url || '/placeholder.jpg'}`
+                                            : `${CONFIG.IMAGE_BASE_URL}${image.image_url || '/placeholder.jpg'}`
                                     }
                                     alt={`${product.name} ${index + 1}`}
                                     className="w-full h-full object-contain"
@@ -192,7 +194,7 @@ const ProductDetail = () => {
                                         src={
                                             image.image_url?.startsWith('http')
                                                 ? image.image_url
-                                                : `http://localhost:8000${image.image_url}`
+                                                : `${CONFIG.IMAGE_BASE_URL}${image.image_url}`
                                         }
                                         alt={`${product.name} thumb ${index + 1}`}
                                         className="w-full h-full object-cover"

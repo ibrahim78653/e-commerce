@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Carousel } from 'react-bootstrap';
+import CONFIG from '../../config';
+
 
 const VariantCarousel = ({ variants = [], images = [], productName, onVariantChange }) => {
     const [index, setIndex] = useState(0);
@@ -52,7 +54,7 @@ const VariantCarousel = ({ variants = [], images = [], productName, onVariantCha
             {displayImages.map((img, idx) => {
                 const fullImageUrl = img.image_url.startsWith('http')
                     ? img.image_url
-                    : `http://localhost:8000${img.image_url}`;
+                    : `${CONFIG.IMAGE_BASE_URL}${img.image_url}`;
 
                 return (
                     <Carousel.Item key={idx} className="h-64">

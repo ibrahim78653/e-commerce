@@ -6,6 +6,8 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Edit2, X, CheckCircle2 } from 'lucide-react';
 import { productsAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import CONFIG from '../config';
+
 
 const ColorVariantManager = ({ productId, variants = [], onUpdate }) => {
     const [showModal, setShowModal] = useState(false);
@@ -186,7 +188,7 @@ const ColorVariantManager = ({ productId, variants = [], onUpdate }) => {
                                 {variant.images.map((img, idx) => (
                                     <img
                                         key={idx}
-                                        src={img.image_url.startsWith('http') ? img.image_url : `http://localhost:8000${img.image_url}`}
+                                        src={img.image_url.startsWith('http') ? img.image_url : `${CONFIG.IMAGE_BASE_URL}${img.image_url}`}
                                         alt={`${variant.color_name} ${idx + 1}`}
                                         className="w-16 h-16 object-cover rounded border"
                                     />
@@ -276,7 +278,7 @@ const ColorVariantManager = ({ productId, variants = [], onUpdate }) => {
                                         {formData.images.map((img, idx) => (
                                             <div key={idx} className="relative group">
                                                 <img
-                                                    src={img.image_url.startsWith('http') ? img.image_url : `http://localhost:8000${img.image_url}`}
+                                                    src={img.image_url.startsWith('http') ? img.image_url : `${CONFIG.IMAGE_BASE_URL}${img.image_url}`}
                                                     alt={`Preview ${idx + 1}`}
                                                     className={`w-20 h-20 object-cover rounded border-2 ${img.is_primary ? 'border-primary-600' : 'border-gray-200'}`}
                                                 />

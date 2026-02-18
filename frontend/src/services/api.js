@@ -4,8 +4,12 @@
  */
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import CONFIG from '../config';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// Ensure the URL ends with /api if it's not already there for relative paths
+const API_BASE_URL = CONFIG.API_BASE_URL.endsWith('/api')
+    ? CONFIG.API_BASE_URL
+    : (CONFIG.API_BASE_URL.startsWith('http') ? `${CONFIG.API_BASE_URL}/api` : '/api');
 
 // Create axios instance
 const api = axios.create({

@@ -6,6 +6,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Package } from 'lucide-react';
 import ColorVariantManager from './ColorVariantManager';
 import { productsAPI } from '../services/api';
+import CONFIG from '../config';
+
 
 const ProductDetailModal = ({ product, onClose, onUpdate }) => {
     const [productData, setProductData] = useState(product);
@@ -99,7 +101,7 @@ const ProductDetailModal = ({ product, onClose, onUpdate }) => {
                                     .map((img, idx) => (
                                         <img
                                             key={idx}
-                                            src={img.image_url.startsWith('http') ? img.image_url : `http://localhost:8000${img.image_url}`}
+                                            src={img.image_url.startsWith('http') ? img.image_url : `${CONFIG.IMAGE_BASE_URL}${img.image_url}`}
                                             alt={`Product ${idx + 1}`}
                                             className="w-24 h-24 object-cover rounded border"
                                         />

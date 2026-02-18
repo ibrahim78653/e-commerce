@@ -7,6 +7,7 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import Button from '../components/ui/Button';
+import CONFIG from '../config';
 
 const CartPage = () => {
     const navigate = useNavigate();
@@ -49,7 +50,7 @@ const CartPage = () => {
 
                         const fullImageUrl = imageUrl.startsWith('http')
                             ? imageUrl
-                            : `http://localhost:8000${imageUrl}`;
+                            : `${CONFIG.IMAGE_BASE_URL}${imageUrl}`;
                         const price = item.discounted_price || item.original_price;
 
                         return (

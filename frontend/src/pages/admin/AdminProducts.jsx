@@ -4,6 +4,8 @@ import { Plus, Trash, Edit, Search, Filter, Eye, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductDetailModal from '../../components/ProductDetailModal';
+import CONFIG from '../../config';
+
 
 const AdminProducts = () => {
     const [products, setProducts] = useState([]);
@@ -166,7 +168,7 @@ const AdminProducts = () => {
 
         if (product.images && product.images.length > 0) {
             const img = product.images[0].image_url;
-            setImagePreview(img.startsWith('http') ? img : `http://localhost:8000${img}`);
+            setImagePreview(img.startsWith('http') ? img : `${CONFIG.IMAGE_BASE_URL}${img}`);
         } else {
             setImagePreview(null);
         }
@@ -217,7 +219,11 @@ const AdminProducts = () => {
                                     <div className="flex items-center">
                                         <div className="h-10 w-10 flex-shrink-0">
                                             {p.images?.[0] ? (
-                                                <img className="h-10 w-10 rounded-full object-cover" src={p.images[0].image_url} alt="" />
+                                                <img
+                                                    className="h-10 w-10 rounded-full object-cover"
+                                                    src={p.images[0].image_url.startsWith('http') ? p.images[0].image_url : `${CONFIG.IMAGE_BASE_URL}${p.images[0].image_url}`}
+                                                    alt=""
+                                                />
                                             ) : (
                                                 <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                                             )}
@@ -320,7 +326,7 @@ const AdminProducts = () => {
                                         {formData.image_urls.map((url, idx) => (
                                             <div key={idx} className="relative group">
                                                 <img
-                                                    src={url.startsWith('http') ? url : `http://localhost:8000${url}`}
+                                                    src={url.startsWith('http') ? url : `${CONFIG.IMAGE_BASE_URL}${url}`}
                                                     alt="Preview"
                                                     className="h-20 w-20 object-cover rounded shadow border"
                                                 />

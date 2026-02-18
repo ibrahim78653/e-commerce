@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import Button from './ui/Button';
 import VariantCarousel from './ui/VariantCarousel';
+import CONFIG from '../config';
+
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
@@ -19,7 +21,8 @@ const ProductCard = ({ product }) => {
 
     // Get first image or placeholder
     const imageUrl = product.images?.[0]?.image_url || '/placeholder.jpg';
-    const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `http://localhost:8000${imageUrl}`;
+    const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `${CONFIG.IMAGE_BASE_URL}${imageUrl}`;
+
 
     const carouselVariants = product.color_variants?.filter(v => v.show_in_carousel && v.images?.length > 0) || [];
     const totalVariantImages = carouselVariants.reduce((sum, v) => sum + (v.images?.length || 0), 0);

@@ -1,0 +1,34 @@
+# FastAPI and ASGI server
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Database
+sqlalchemy
+# psycopg2-binary  # PostgreSQL driver (Commented out for SQLite local dev)
+alembic
+
+# Authentication & Security
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.0.1
+
+# Environment & Configuration
+pydantic
+pydantic-settings
+email-validator
+python-dotenv
+
+# Payment Gateway
+razorpay
+
+# File handling
+python-magic
+pillow
+
+# HTTP client (for testing)
+httpx
+
+# Development tools
+pytest
+pytest-asyncio
