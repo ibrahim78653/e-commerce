@@ -1,6 +1,10 @@
 # FastAPI and ASGI server
 fastapi
+gunicorn
 uvicorn[standard]
+
+
+
 python-multipart
 
 # Database
