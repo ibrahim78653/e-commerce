@@ -9,7 +9,7 @@ python-multipart
 
 # Database
 sqlalchemy
-# psycopg2-binary  # PostgreSQL driver (Commented out for SQLite local dev)
+psycopg2-binary
 alembic
 
 # Authentication & Security
@@ -27,7 +27,6 @@ python-dotenv
 razorpay
 
 # File handling
-python-magic
 pillow
 
 # HTTP client (for testing)

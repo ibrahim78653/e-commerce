@@ -2,7 +2,7 @@ import requests
 import sys
 
 BACKEND_URL = "https://e-commerce-1-pldj.onrender.com"
-FRONTEND_ORIGIN = "https://burhanicollection.vercel.app"
+FRONTEND_ORIGIN = "https://burhanicollection53.vercel.app"
 
 def check_cors():
     print(f"Checking CORS for backend: {BACKEND_URL}")

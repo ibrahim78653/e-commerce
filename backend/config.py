@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # For SQLite development: DATABASE_URL: str = "sqlite:///./ecommerce.db"
     
     # JWT Authentication
-    JWT_SECRET_KEY: str  # Must be set in .env - use: openssl rand -hex 32
+    JWT_SECRET_KEY: str = "temporary-secret-key-change-this-immediately"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7

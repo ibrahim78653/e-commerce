@@ -8,7 +8,10 @@ from config import settings
 import os
 
 # Initialize DB
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"Database initialization skipped or failed: {e}")
 
 app = FastAPI(title="Burhani Collection API")
 
@@ -22,7 +25,11 @@ app.add_middleware(
 )
 
 # Static files
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+try:
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+except Exception as e:
+    print(f"Static directory creation skipped or failed: {e}")
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Routers
