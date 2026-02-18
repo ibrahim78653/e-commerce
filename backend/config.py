@@ -3,7 +3,8 @@ Configuration Management using Pydantic Settings
 Loads environment variables and provides typed configuration
 """
 from pydantic_settings import BaseSettings
-from typing import List, Optional
+from pydantic import field_validator
+from typing import List, Optional, Any
 from functools import lru_cache
 
 
@@ -37,6 +38,15 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:8000"
     ]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: Any) -> List[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
     
     # Razorpay (Payment Gateway)
     RAZORPAY_KEY_ID: str = ""  # Public key
