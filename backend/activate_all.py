@@ -6,7 +6,7 @@ async def f():
     client = AsyncIOMotorClient(settings.MONGODB_URL)
     db = client[settings.DB_NAME]
     res = await db.products.update_many({}, {"$set": {"is_active": True}})
-    print(f"Updated {res.modified_count} products.")
+    print(f"Matched {res.matched_count} products, Updated {res.modified_count} products.")
     client.close()
 
 if __name__ == "__main__":
