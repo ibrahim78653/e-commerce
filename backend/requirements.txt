@@ -10,6 +10,7 @@ psycopg2-binary
 alembic
 motor
 pymongo
+dnspython
 
 # Authentication & Security
 python-jose[cryptography]
