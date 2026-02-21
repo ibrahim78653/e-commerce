@@ -4,13 +4,16 @@
  */
 
 const getApiUrl = () => {
-    // If we're on localhost, use the local backend
+    // 1. Always prefer the explicit env variable (set in .env or Vercel dashboard)
+    if (import.meta.env.VITE_API_BASE_URL) {
+        return import.meta.env.VITE_API_BASE_URL;
+    }
+    // 2. If running locally without VITE_API_BASE_URL, try local backend
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         return 'http://localhost:8000';
     }
-    // In production, the backend is usually served from the same origin under /api
-    // or from a specific environment variable
-    return import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    // 3. In production without env var, assume same-origin
+    return window.location.origin;
 };
 
 export const CONFIG = {

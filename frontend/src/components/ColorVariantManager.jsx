@@ -191,6 +191,9 @@ const ColorVariantManager = ({ productId, variants = [], onUpdate }) => {
                                         src={img.image_url.startsWith('http') ? img.image_url : `${CONFIG.IMAGE_BASE_URL}${img.image_url}`}
                                         alt={`${variant.color_name} ${idx + 1}`}
                                         className="w-16 h-16 object-cover rounded border"
+                                        onError={(e) => {
+                                            e.target.src = 'https://via.placeholder.com/64?text=No+Image';
+                                        }}
                                     />
                                 ))}
                             </div>
@@ -281,6 +284,9 @@ const ColorVariantManager = ({ productId, variants = [], onUpdate }) => {
                                                     src={img.image_url.startsWith('http') ? img.image_url : `${CONFIG.IMAGE_BASE_URL}${img.image_url}`}
                                                     alt={`Preview ${idx + 1}`}
                                                     className={`w-20 h-20 object-cover rounded border-2 ${img.is_primary ? 'border-primary-600' : 'border-gray-200'}`}
+                                                    onError={(e) => {
+                                                        e.target.src = 'https://via.placeholder.com/80?text=No+Image';
+                                                    }}
                                                 />
                                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
                                                     <button

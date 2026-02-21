@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session
-import models, schemas, auth, database
-from typing import List, Optional
+import schemas, auth, database
+from typing import List, Optional, Any
 import os
 import shutil
 from config import settings
@@ -10,7 +9,7 @@ import math
 router = APIRouter(prefix="/api", tags=["Products"])
 
 @router.get("/products", response_model=schemas.ProductListResponse)
-def get_products(
+async def get_products(
     category_id: Optional[int] = None, 
     page: int = 1,
     page_size: int = 12,
@@ -20,51 +19,68 @@ def get_products(
     is_featured: Optional[bool] = None,
     is_active: Optional[bool] = None, # Allow filtering by status
     admin_view: bool = False, # Flag to override defaults for admin
-    db: Session = Depends(database.get_db)
+    db: Any = Depends(database.get_db)
 ):
-    query = db.query(models.Product)
+    filt = {}
     
     if admin_view:
-        # Admin view: filter by is_active only if specified, otherwise show all
         if is_active is not None:
-            query = query.filter(models.Product.is_active == is_active)
+            filt["is_active"] = is_active
     else:
-        # Public view: default to active products only, unless explicitly filtering
         status_to_filter = is_active if is_active is not None else True
-        query = query.filter(models.Product.is_active == status_to_filter)
+        filt["is_active"] = status_to_filter
     
     if category_id:
-        query = query.filter(models.Product.category_id == category_id)
+        filt["category_id"] = category_id
         
     if search:
-        search_filter = f"%{search}%"
-        query = query.filter(models.Product.name.ilike(search_filter))
+        filt["name"] = {"$regex": search, "$options": "i"}
         
     if is_featured:
-        query = query.filter(models.Product.is_featured == True)
+        filt["is_featured"] = True
         
     # Sorting
+    sort_field = "id"
     if sort_by == "price":
-        sort_attr = models.Product.original_price
+        sort_field = "original_price"
     elif sort_by == "name":
-        sort_attr = models.Product.name
+        sort_field = "name"
     elif sort_by == "stock":
-        sort_attr = models.Product.stock
-    else:
-        sort_attr = models.Product.id
+        sort_field = "stock"
 
-    if sort_order == "desc":
-        query = query.order_by(sort_attr.desc())
-    else:
-        query = query.order_by(sort_attr.asc())
-        
-    total = query.count()
+    direction = -1 if sort_order == "desc" else 1
+    
+    print(f"DEBUG: filt={filt}")
+    total = await db.products.count_documents(filt)
+    print(f"DEBUG: total found={total}")
     pages = math.ceil(total / page_size) if page_size > 0 else 1
     offset = (page - 1) * page_size
-    items = query.offset(offset).limit(page_size).all()
+    
+    cursor = db.products.find(filt).sort(sort_field, direction).skip(offset).limit(page_size)
+    items = await cursor.to_list(length=page_size)
+    print(f"DEBUG: items fetched={len(items)}")
+
+    # Fetch categories, images, and variants for these products
+    # This is a bit more manual in MongoDB
+    populated_items = []
+    for item in items:
+        # Category
+        if item.get("category_id"):
+            item["category"] = await db.categories.find_one({"id": item["category_id"]})
+        
+        # Images (base images have color_variant_id = None or null)
+        item["images"] = await db.product_images.find({"product_id": item["id"], "color_variant_id": None}).to_list(length=100)
+        
+        # Color Variants
+        variants = await db.product_color_variants.find({"product_id": item["id"]}).to_list(length=100)
+        for v in variants:
+            v["images"] = await db.product_images.find({"color_variant_id": v["id"]}).to_list(length=100)
+        item["color_variants"] = variants
+        
+        populated_items.append(item)
 
     return {
-        "items": items,
+        "items": populated_items,
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -72,302 +88,297 @@ def get_products(
     }
 
 @router.get("/products/{product_id}", response_model=schemas.ProductResponse)
-def get_product(product_id: int, db: Session = Depends(database.get_db)):
-    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+async def get_product(product_id: int, db: Any = Depends(database.get_db)):
+    product = await db.products.find_one({"id": product_id})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Populate relationships
+    if product.get("category_id"):
+        product["category"] = await db.categories.find_one({"id": product["category_id"]})
+    
+    product["images"] = await db.product_images.find({"product_id": product_id, "color_variant_id": None}).to_list(length=100)
+    
+    variants = await db.product_color_variants.find({"product_id": product_id}).to_list(length=100)
+    for v in variants:
+        v["images"] = await db.product_images.find({"color_variant_id": v["id"]}).to_list(length=100)
+    product["color_variants"] = variants
+    
     return product
 
+async def get_next_id(db: Any, collection_name: str):
+    res = await db.counters.find_one_and_update(
+        {"_id": collection_name},
+        {"$inc": {"seq": 1}},
+        upsert=True,
+        return_document=True
+    )
+    return res["seq"]
+
 @router.post("/products", response_model=schemas.ProductResponse)
-def create_product(product_data: schemas.ProductCreate, db: Session = Depends(database.get_db), admin: models.User = Depends(auth.get_admin)):
+async def create_product(product_data: schemas.ProductCreate, db: Any = Depends(database.get_db), admin: Any = Depends(auth.get_admin)):
     # Check if slug already exists
-    existing_product = db.query(models.Product).filter(models.Product.slug == product_data.slug).first()
+    existing_product = await db.products.find_one({"slug": product_data.slug})
     if existing_product:
-        # If slug exists, append some uniqueness
         import time
         product_data.slug = f"{product_data.slug}-{int(time.time())}"
 
     try:
-        new_product = models.Product(
-            name=product_data.name,
-            slug=product_data.slug,
-            description=product_data.description,
-            original_price=product_data.original_price,
-            discounted_price=product_data.discounted_price,
-            stock=product_data.stock,
-            category_id=product_data.category_id,
-            is_featured=product_data.is_featured,
-            is_active=product_data.is_active,
-            short_description=product_data.short_description,
-            sizes=product_data.sizes,
-            colors=product_data.colors
-        )
-        db.add(new_product)
-        db.flush() # Get the product ID
+        # Determine next ID
+        # Initialize counter if not exists (should be done once ideally)
+        count_doc = await db.counters.find_one({"_id": "products"})
+        if not count_doc:
+            # Seed from current data
+            max_prod = await db.products.find_one(sort=[("id", -1)])
+            start_val = max_prod["id"] if max_prod else 0
+            await db.counters.update_one({"_id": "products"}, {"$set": {"seq": start_val}}, upsert=True)
+
+        new_id = await get_next_id(db, "products")
+        
+        product_dict = product_data.dict(exclude={'image_urls', 'color_variants'})
+        product_dict["id"] = new_id
+        
+        await db.products.insert_one(product_dict)
         
         # Add base images
         for idx, url in enumerate(product_data.image_urls):
-            img = models.ProductImage(
-                product_id=new_product.id, 
-                image_url=url,
-                is_primary=(idx == 0)
-            )
-            db.add(img)
+            img_id = await get_next_id(db, "product_images")
+            img = {
+                "id": img_id,
+                "product_id": new_id,
+                "color_variant_id": None,
+                "image_url": url,
+                "is_primary": (idx == 0)
+            }
+            await db.product_images.insert_one(img)
         
         # Add color variants
         for variant_data in product_data.color_variants:
-            new_variant = models.ProductColorVariant(
-                product_id=new_product.id,
-                color_name=variant_data.color_name,
-                color_code=variant_data.color_code,
-                stock=variant_data.stock,
-                is_active=variant_data.is_active,
-                show_in_carousel=variant_data.show_in_carousel
-            )
-            db.add(new_variant)
-            db.flush()  # Get variant ID
+            v_id = await get_next_id(db, "product_color_variants")
+            new_variant = {
+                "id": v_id,
+                "product_id": new_id,
+                "color_name": variant_data.color_name,
+                "color_code": variant_data.color_code,
+                "stock": variant_data.stock,
+                "is_active": variant_data.is_active,
+                "show_in_carousel": variant_data.show_in_carousel,
+                "created_at": datetime.utcnow()
+            }
+            await db.product_color_variants.insert_one(new_variant)
             
             # Add variant images
             for idx, img_data in enumerate(variant_data.images):
-                variant_img = models.ProductImage(
-                    product_id=new_product.id,
-                    color_variant_id=new_variant.id,
-                    image_url=img_data.image_url,
-                    is_primary=img_data.is_primary or (idx == 0)
-                )
-                db.add(variant_img)
+                img_id = await get_next_id(db, "product_images")
+                variant_img = {
+                    "id": img_id,
+                    "product_id": new_id,
+                    "color_variant_id": v_id,
+                    "image_url": img_data.image_url,
+                    "is_primary": img_data.is_primary or (idx == 0)
+                }
+                await db.product_images.insert_one(variant_img)
         
-        db.commit()
-        db.refresh(new_product)
-        return new_product
+        return await get_product(new_id, db)
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to create product: {str(e)}")
 
 @router.put("/products/{product_id}", response_model=schemas.ProductResponse)
-def update_product(product_id: int, product_data: schemas.ProductCreate, db: Session = Depends(database.get_db), admin: models.User = Depends(auth.get_admin)):
-    print(f"DEBUG: START update_product for ID {product_id}")
-    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+async def update_product(product_id: int, product_data: schemas.ProductCreate, db: Any = Depends(database.get_db), admin: Any = Depends(auth.get_admin)):
+    product = await db.products.find_one({"id": product_id})
     if not product:
-        print(f"DEBUG: Product {product_id} not found")
         raise HTTPException(status_code=404, detail="Product not found")
     
-    # Check if new slug conflicts with another product
-    if product.slug != product_data.slug:
-        conflict = db.query(models.Product).filter(models.Product.slug == product_data.slug).first()
+    # Check if new slug conflicts
+    if product["slug"] != product_data.slug:
+        conflict = await db.products.find_one({"slug": product_data.slug})
         if conflict:
-            print(f"DEBUG: Slug conflict for '{product_data.slug}', generating unique one")
             import time
             product_data.slug = f"{product_data.slug}-{int(time.time())}"
 
     try:
         # Update basic fields
         update_dict = product_data.dict(exclude={'image_urls', 'color_variants'})
-        print(f"DEBUG: Updating fields: {update_dict}")
-        
-        for key, value in update_dict.items():
-            if hasattr(product, key):
-                setattr(product, key, value)
-            else:
-                print(f"WARNING: Field '{key}' not found in Product model, skipping")
+        await db.products.update_one({"id": product_id}, {"$set": update_dict})
         
         # Update base images if provided
-        # We only update base images (those NOT associated with a variant)
         if product_data.image_urls is not None:
-            print(f"DEBUG: Updating images with: {product_data.image_urls}")
             # Delete old base images
-            db.query(models.ProductImage).filter(
-                models.ProductImage.product_id == product_id,
-                models.ProductImage.color_variant_id == None
-            ).delete()
+            await db.product_images.delete_many({
+                "product_id": product_id,
+                "color_variant_id": None
+            })
             
             # Add new ones
             for idx, url in enumerate(product_data.image_urls):
-                img = models.ProductImage(
-                    product_id=product_id,
-                    image_url=url,
-                    is_primary=(idx == 0)
-                )
-                db.add(img)
+                img_id = await get_next_id(db, "product_images")
+                img = {
+                    "id": img_id,
+                    "product_id": product_id,
+                    "image_url": url,
+                    "is_primary": (idx == 0),
+                    "color_variant_id": None
+                }
+                await db.product_images.insert_one(img)
 
-        db.commit()
-        db.refresh(product)
-        print(f"DEBUG: Successfully updated product {product_id}")
-        return product
+        return await get_product(product_id, db)
     except Exception as e:
-        print(f"DEBUG: Update failed: {str(e)}")
-        db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to update product: {str(e)}")
 
 @router.delete("/products/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(database.get_db), admin: models.User = Depends(auth.get_admin)):
-    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+async def delete_product(product_id: int, db: Any = Depends(database.get_db), admin: Any = Depends(auth.get_admin)):
+    product = await db.products.find_one({"id": product_id})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    # Soft delete
-    product.is_active = False
-    db.commit()
+    await db.products.update_one({"id": product_id}, {"$set": {"is_active": False}})
     return {"message": "Product deactivated successfully"}
 
 # Categories
 @router.get("/categories", response_model=List[schemas.CategoryResponse])
-def get_categories(db: Session = Depends(database.get_db)):
-    return db.query(models.Category).all()
+async def get_categories(db: Any = Depends(database.get_db)):
+    return await db.categories.find().to_list(length=100)
 
 @router.post("/categories", response_model=schemas.CategoryResponse)
-def create_category(cat_data: schemas.CategoryBase, db: Session = Depends(database.get_db), admin: models.User = Depends(auth.get_admin)):
-    new_cat = models.Category(**cat_data.dict())
-    db.add(new_cat)
-    db.commit()
-    db.refresh(new_cat)
+async def create_category(cat_data: schemas.CategoryBase, db: Any = Depends(database.get_db), admin: Any = Depends(auth.get_admin)):
+    # Initialize counter if not exists
+    count_doc = await db.counters.find_one({"_id": "categories"})
+    if not count_doc:
+        max_cat = await db.categories.find_one(sort=[("id", -1)])
+        start_val = max_cat["id"] if max_cat else 0
+        await db.counters.update_one({"_id": "categories"}, {"$set": {"seq": start_val}}, upsert=True)
+
+    new_id = await get_next_id(db, "categories")
+    new_cat = cat_data.dict()
+    new_cat["id"] = new_id
+    await db.categories.insert_one(new_cat)
     return new_cat
 
 # Color Variants Management
 @router.post("/products/{product_id}/variants", response_model=schemas.ProductColorVariantResponse)
-def add_color_variant(
+async def add_color_variant(
     product_id: int, 
     variant_data: schemas.ProductColorVariantCreate, 
-    db: Session = Depends(database.get_db), 
-    admin: models.User = Depends(auth.get_admin)
+    db: Any = Depends(database.get_db), 
+    admin: Any = Depends(auth.get_admin)
 ):
-    """Add a new color variant to an existing product"""
-    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    product = await db.products.find_one({"id": product_id})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
     try:
-        new_variant = models.ProductColorVariant(
-            product_id=product_id,
-            color_name=variant_data.color_name,
-            color_code=variant_data.color_code,
-            stock=variant_data.stock,
-            is_active=variant_data.is_active,
-            show_in_carousel=variant_data.show_in_carousel
-        )
-        db.add(new_variant)
-        db.flush()
+        # Initialize counter
+        count_doc = await db.counters.find_one({"_id": "product_color_variants"})
+        if not count_doc:
+            max_v = await db.product_color_variants.find_one(sort=[("id", -1)])
+            start_val = max_v["id"] if max_v else 0
+            await db.counters.update_one({"_id": "product_color_variants"}, {"$set": {"seq": start_val}}, upsert=True)
+
+        v_id = await get_next_id(db, "product_color_variants")
+        new_variant = {
+            "id": v_id,
+            "product_id": product_id,
+            "color_name": variant_data.color_name,
+            "color_code": variant_data.color_code,
+            "stock": variant_data.stock,
+            "is_active": variant_data.is_active,
+            "show_in_carousel": variant_data.show_in_carousel,
+            "created_at": datetime.utcnow()
+        }
+        await db.product_color_variants.insert_one(new_variant)
         
         # Add variant images
         for idx, img_data in enumerate(variant_data.images):
-            variant_img = models.ProductImage(
-                product_id=product_id,
-                color_variant_id=new_variant.id,
-                image_url=img_data.image_url,
-                is_primary=img_data.is_primary or (idx == 0)
-            )
-            db.add(variant_img)
+            img_id = await get_next_id(db, "product_images")
+            variant_img = {
+                "id": img_id,
+                "product_id": product_id,
+                "color_variant_id": v_id,
+                "image_url": img_data.image_url,
+                "is_primary": img_data.is_primary or (idx == 0)
+            }
+            await db.product_images.insert_one(variant_img)
         
-        db.commit()
-        db.refresh(new_variant)
-        return new_variant
+        # Return the variant with images
+        res = await db.product_color_variants.find_one({"id": v_id})
+        res["images"] = await db.product_images.find({"color_variant_id": v_id}).to_list(length=100)
+        return res
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to add variant: {str(e)}")
 
 @router.put("/products/{product_id}/variants/{variant_id}", response_model=schemas.ProductColorVariantResponse)
-def update_color_variant(
+async def update_color_variant(
     product_id: int,
     variant_id: int,
     variant_data: schemas.ProductColorVariantCreate,
-    db: Session = Depends(database.get_db),
-    admin: models.User = Depends(auth.get_admin)
+    db: Any = Depends(database.get_db),
+    admin: Any = Depends(auth.get_admin)
 ):
-    """Update an existing color variant"""
-    variant = db.query(models.ProductColorVariant).filter(
-        models.ProductColorVariant.id == variant_id,
-        models.ProductColorVariant.product_id == product_id
-    ).first()
-    
+    variant = await db.product_color_variants.find_one({"id": variant_id, "product_id": product_id})
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
     
     try:
-        # Update variant fields
-        variant.color_name = variant_data.color_name
-        variant.color_code = variant_data.color_code
-        variant.stock = variant_data.stock
-        variant.is_active = variant_data.is_active
-        variant.show_in_carousel = variant_data.show_in_carousel
+        update_data = {
+            "color_name": variant_data.color_name,
+            "color_code": variant_data.color_code,
+            "stock": variant_data.stock,
+            "is_active": variant_data.is_active,
+            "show_in_carousel": variant_data.show_in_carousel
+        }
+        await db.product_color_variants.update_one({"id": variant_id}, {"$set": update_data})
         
-        # Update images if provided
         if variant_data.images:
-            # Remove old images
-            db.query(models.ProductImage).filter(
-                models.ProductImage.color_variant_id == variant_id
-            ).delete()
-            
-            # Add new images
+            await db.product_images.delete_many({"color_variant_id": variant_id})
             for idx, img_data in enumerate(variant_data.images):
-                variant_img = models.ProductImage(
-                    product_id=product_id,
-                    color_variant_id=variant_id,
-                    image_url=img_data.image_url,
-                    is_primary=img_data.is_primary or (idx == 0)
-                )
-                db.add(variant_img)
+                img_id = await get_next_id(db, "product_images")
+                variant_img = {
+                    "id": img_id,
+                    "product_id": product_id,
+                    "color_variant_id": variant_id,
+                    "image_url": img_data.image_url,
+                    "is_primary": img_data.is_primary or (idx == 0)
+                }
+                await db.product_images.insert_one(variant_img)
         
-        db.commit()
-        db.refresh(variant)
-        return variant
+        res = await db.product_color_variants.find_one({"id": variant_id})
+        res["images"] = await db.product_images.find({"color_variant_id": variant_id}).to_list(length=100)
+        return res
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to update variant: {str(e)}")
 
 @router.delete("/products/{product_id}/variants/{variant_id}")
-def delete_color_variant(
+async def delete_color_variant(
     product_id: int,
     variant_id: int,
-    db: Session = Depends(database.get_db),
-    admin: models.User = Depends(auth.get_admin)
+    db: Any = Depends(database.get_db),
+    admin: Any = Depends(auth.get_admin)
 ):
-    """Delete a color variant"""
-    variant = db.query(models.ProductColorVariant).filter(
-        models.ProductColorVariant.id == variant_id,
-        models.ProductColorVariant.product_id == product_id
-    ).first()
-    
+    variant = await db.product_color_variants.find_one({"id": variant_id, "product_id": product_id})
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
     
-    db.delete(variant)
-    db.commit()
+    await db.product_color_variants.delete_one({"id": variant_id})
+    await db.product_images.delete_many({"color_variant_id": variant_id})
     return {"message": "Variant deleted successfully"}
 
 # Image Upload
 @router.post("/upload/image")
-async def upload_image(file: UploadFile = File(...), admin: models.User = Depends(auth.get_admin)):
-    # 1. Validate File Extension
+async def upload_image(file: UploadFile = File(...), admin: Any = Depends(auth.get_admin)):
     file_ext = os.path.splitext(file.filename)[1].lower()
     if file_ext not in settings.ALLOWED_IMAGE_EXTENSIONS:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Invalid file type. Allowed: {', '.join(settings.ALLOWED_IMAGE_EXTENSIONS)}"
-        )
+        raise HTTPException(status_code=400, detail=f"Invalid file type.")
     
-    # 2. Validate File Size
-    # We need to read a bit to check size or use the file object's size if available
-    # In newer FastAPI versions, UploadFile has a 'size' attribute. 
-    # If not, we can check by seeking or tracking.
     try:
-        # Seek to end to get size
         file.file.seek(0, os.SEEK_END)
         file_size = file.file.tell()
-        file.file.seek(0) # Reset to beginning
-        
+        file.file.seek(0)
         if file_size > settings.MAX_UPLOAD_SIZE:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"File too large. Maximum size is {settings.MAX_UPLOAD_SIZE / (1024*1024)}MB"
-            )
-    except Exception as e:
-        if isinstance(e, HTTPException): raise e
+            raise HTTPException(status_code=400, detail="File too large.")
+    except Exception:
         raise HTTPException(status_code=500, detail="Could not validate file size")
 
-    # 3. Save File
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    
-    # Use a unique filename to prevent overwrites
     import uuid
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_path = os.path.join(settings.UPLOAD_DIR, unique_filename)
@@ -378,3 +389,4 @@ async def upload_image(file: UploadFile = File(...), admin: models.User = Depend
         return {"image_url": f"/static/uploads/{unique_filename}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save image: {str(e)}")
+from datetime import datetime

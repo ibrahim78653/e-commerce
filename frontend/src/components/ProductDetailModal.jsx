@@ -104,6 +104,9 @@ const ProductDetailModal = ({ product, onClose, onUpdate }) => {
                                             src={img.image_url.startsWith('http') ? img.image_url : `${CONFIG.IMAGE_BASE_URL}${img.image_url}`}
                                             alt={`Product ${idx + 1}`}
                                             className="w-24 h-24 object-cover rounded border"
+                                            onError={(e) => {
+                                                e.target.src = 'https://via.placeholder.com/150?text=No+Image';
+                                            }}
                                         />
                                     ))}
                             </div>

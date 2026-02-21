@@ -223,6 +223,9 @@ const AdminProducts = () => {
                                                     className="h-10 w-10 rounded-full object-cover"
                                                     src={p.images[0].image_url.startsWith('http') ? p.images[0].image_url : `${CONFIG.IMAGE_BASE_URL}${p.images[0].image_url}`}
                                                     alt=""
+                                                    onError={(e) => {
+                                                        e.target.src = 'https://via.placeholder.com/40?text=?';
+                                                    }}
                                                 />
                                             ) : (
                                                 <div className="h-10 w-10 rounded-full bg-gray-200"></div>
@@ -329,6 +332,9 @@ const AdminProducts = () => {
                                                     src={url.startsWith('http') ? url : `${CONFIG.IMAGE_BASE_URL}${url}`}
                                                     alt="Preview"
                                                     className="h-20 w-20 object-cover rounded shadow border"
+                                                    onError={(e) => {
+                                                        e.target.src = 'https://via.placeholder.com/80?text=No+Image';
+                                                    }}
                                                 />
                                                 <button
                                                     type="button"

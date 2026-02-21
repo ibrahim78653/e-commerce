@@ -4,6 +4,7 @@
  */
 import { Navigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
+import toast from 'react-hot-toast';
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
     const { isAuthenticated, user } = useAuthStore();

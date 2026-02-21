@@ -14,6 +14,7 @@ const API_BASE_URL = CONFIG.API_BASE_URL.endsWith('/api')
 // Create axios instance
 const api = axios.create({
     baseURL: API_BASE_URL,
+    timeout: 60000, // 60s timeout for Render free-tier cold starts
     headers: {
         'Content-Type': 'application/json',
     },
@@ -37,7 +38,12 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Check if this is a login/register attempt (should NOT trigger token refresh)
+        const isAuthRequest = originalRequest?.url?.includes('/auth/login') ||
+            originalRequest?.url?.includes('/auth/register');
+
+        // Only attempt token refresh for 401s that are NOT login/register requests
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
             originalRequest._retry = true;
             const refreshToken = localStorage.getItem('refresh_token');
 
@@ -59,18 +65,27 @@ api.interceptors.response.use(
             }
 
             // If we reach here, either no refresh token or refresh failed
-            localStorage.clear();
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
             if (window.location.pathname.startsWith('/admin')) {
                 window.location.href = '/admin/login';
             }
         }
 
-        const message = error.response?.data?.detail;
-        const errorMsg = Array.isArray(message) ? message[0].msg : (message || 'An error occurred');
+        // Show error toast for ALL failed requests
+        if (error.response) {
+            // Server responded with an error status
+            const message = error.response.data?.detail;
+            const errorMsg = Array.isArray(message) ? message[0].msg : (message || 'An error occurred');
 
-        // Don't show toast for 401s that we might be refreshing
-        if (error.response?.status !== 401) {
-            toast.error(errorMsg);
+            // Show toast for login/register failures and non-401 errors
+            if (isAuthRequest || error.response.status !== 401) {
+                toast.error(errorMsg);
+            }
+        } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+            toast.error('Server is waking up... Please try again in a few seconds.');
+        } else {
+            toast.error('Network error. Please check your connection.');
         }
 
         return Promise.reject(error);

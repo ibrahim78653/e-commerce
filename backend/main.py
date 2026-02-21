@@ -1,13 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import models
-from database import engine, init_db
+from database import init_db
 from routers import auth, products, orders, admin
 from config import settings
 import os
 
-# Initialize DB
+# Initialize DB (can be used for indexes)
 try:
     init_db()
 except Exception as e:

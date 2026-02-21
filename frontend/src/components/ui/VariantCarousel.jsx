@@ -62,6 +62,9 @@ const VariantCarousel = ({ variants = [], images = [], productName, onVariantCha
                             className="d-block w-100 h-100 object-cover"
                             src={fullImageUrl}
                             alt={`${productName} ${img.variantInfo ? ` - ${img.variantInfo.color_name}` : ''}`}
+                            onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/400x300?text=Product+Image';
+                            }}
                         />
                     </Carousel.Item>
                 );

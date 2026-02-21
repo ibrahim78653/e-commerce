@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
-import models, database
+import database
 from config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -29,7 +28,7 @@ def create_refresh_token(data: dict):
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(database.get_db)):
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Any = Depends(database.get_db)):
     token = credentials.credentials
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
@@ -44,13 +43,22 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         print(f"DEBUG AUTH: JWT decode error: {str(e)}")
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
-    user = db.query(models.User).filter(models.User.id == int(user_id)).first()
+    # In MongoDB, we lookup in the 'users' collection
+    user = await db.users.find_one({"id": int(user_id)})
     if not user:
         print(f"DEBUG AUTH: user not found for ID {user_id}")
         raise HTTPException(status_code=401, detail="User not found")
-    return user
+    
+    # To maintain compatibility with code that uses user.role, etc.
+    # we can convert the dict to an object-like structure or just use it as is if we refactor rest
+    # For now, let's use a simple Munch or Box like approach or just a class
+    class UserObject:
+        def __init__(self, **entries):
+            self.__dict__.update(entries)
+    
+    return UserObject(**user)
 
-def get_admin(current_user: models.User = Depends(get_current_user)):
+async def get_admin(current_user: Any = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user

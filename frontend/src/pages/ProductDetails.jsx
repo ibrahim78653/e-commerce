@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { productsAPI } from '../services/api';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
+import CONFIG from '../config';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -37,7 +38,8 @@ const ProductDetails = () => {
     if (loading) return <div className="container" style={{ padding: '2rem' }}>Loading...</div>;
     if (!product) return <div className="container" style={{ padding: '2rem' }}>Product not found</div>;
 
-    const finalImage = product.images?.[0] ? `/api${product.images[0]}` : 'https://via.placeholder.com/600';
+    const imageUrl = product.images?.[0]?.image_url || '/placeholder.jpg';
+    const finalImage = imageUrl.startsWith('http') ? imageUrl : `${CONFIG.IMAGE_BASE_URL}${imageUrl}`;
 
     return (
         <div className="container" style={{ padding: '2rem 1rem' }}>
@@ -48,7 +50,14 @@ const ProductDetails = () => {
 
                     {/* Image Section */}
                     <div style={{ background: '#f9f9f9', borderRadius: '8px', overflow: 'hidden' }}>
-                        <img src={finalImage} alt={product.name} style={{ width: '100%', height: 'auto', objectFit: 'contain', maxHeight: '500px' }} />
+                        <img
+                            src={finalImage}
+                            alt={product.name}
+                            style={{ width: '100%', height: 'auto', objectFit: 'contain', maxHeight: '500px' }}
+                            onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/600?text=Product+Image';
+                            }}
+                        />
                         <div style={{ display: 'flex', gap: '0.5rem', padding: '1rem', overflowX: 'auto' }}>
                             {/* Thumbnails logic would go here */}
                         </div>
