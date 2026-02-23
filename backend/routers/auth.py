@@ -5,6 +5,15 @@ from datetime import datetime
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
+
+def sanitize_user(user_dict: dict) -> dict:
+    """Remove MongoDB _id and other non-serializable fields from user dict."""
+    if user_dict is None:
+        return user_dict
+    sanitized = {k: v for k, v in user_dict.items() if k != "_id"}
+    return sanitized
+
+
 @router.post("/register", response_model=schemas.TokenResponse)
 async def register(user_data: schemas.UserRegister, db: Any = Depends(database.get_db)):
     # Check if user exists
@@ -41,7 +50,7 @@ async def register(user_data: schemas.UserRegister, db: Any = Depends(database.g
         "access_token": access,
         "refresh_token": refresh,
         "token_type": "bearer",
-        "user": new_user_dict
+        "user": sanitize_user(new_user_dict)
     }
 
 @router.post("/login", response_model=schemas.TokenResponse)
@@ -63,13 +72,14 @@ async def login(login_data: schemas.UserLogin, db: Any = Depends(database.get_db
         "access_token": access,
         "refresh_token": refresh,
         "token_type": "bearer",
-        "user": user
+        "user": sanitize_user(user)
     }
 
 @router.get("/me", response_model=schemas.UserResponse)
 async def get_me(current_user: Any = Depends(auth.get_current_user)):
     # get_current_user now returns a UserObject
-    return current_user.__dict__
+    user_dict = current_user.__dict__
+    return sanitize_user(user_dict)
 
 @router.post("/refresh", response_model=schemas.TokenResponse)
 async def refresh(token_data: schemas.TokenRefresh, db: Any = Depends(database.get_db)):
@@ -92,7 +102,7 @@ async def refresh(token_data: schemas.TokenRefresh, db: Any = Depends(database.g
         "access_token": access,
         "refresh_token": token_data.refresh_token,
         "token_type": "bearer",
-        "user": user
+        "user": sanitize_user(user)
     }
 
 @router.put("/me/password")

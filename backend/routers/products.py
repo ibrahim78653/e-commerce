@@ -5,8 +5,18 @@ import os
 import shutil
 from config import settings
 import math
+from datetime import datetime
 
 router = APIRouter(prefix="/api", tags=["Products"])
+
+
+def strip_oid(doc):
+    """Recursively remove MongoDB _id fields from a document or list of documents."""
+    if isinstance(doc, list):
+        return [strip_oid(d) for d in doc]
+    if isinstance(doc, dict):
+        return {k: strip_oid(v) for k, v in doc.items() if k != "_id"}
+    return doc
 
 @router.get("/products", response_model=schemas.ProductListResponse)
 async def get_products(
@@ -80,7 +90,7 @@ async def get_products(
         populated_items.append(item)
 
     return {
-        "items": populated_items,
+        "items": strip_oid(populated_items),
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -104,7 +114,7 @@ async def get_product(product_id: int, db: Any = Depends(database.get_db)):
         v["images"] = await db.product_images.find({"color_variant_id": v["id"]}).to_list(length=100)
     product["color_variants"] = variants
     
-    return product
+    return strip_oid(product)
 
 async def get_next_id(db: Any, collection_name: str):
     res = await db.counters.find_one_and_update(
@@ -237,7 +247,8 @@ async def delete_product(product_id: int, db: Any = Depends(database.get_db), ad
 # Categories
 @router.get("/categories", response_model=List[schemas.CategoryResponse])
 async def get_categories(db: Any = Depends(database.get_db)):
-    return await db.categories.find().to_list(length=100)
+    cats = await db.categories.find().to_list(length=100)
+    return strip_oid(cats)
 
 @router.post("/categories", response_model=schemas.CategoryResponse)
 async def create_category(cat_data: schemas.CategoryBase, db: Any = Depends(database.get_db), admin: Any = Depends(auth.get_admin)):
@@ -252,7 +263,7 @@ async def create_category(cat_data: schemas.CategoryBase, db: Any = Depends(data
     new_cat = cat_data.dict()
     new_cat["id"] = new_id
     await db.categories.insert_one(new_cat)
-    return new_cat
+    return strip_oid(new_cat)
 
 # Color Variants Management
 @router.post("/products/{product_id}/variants", response_model=schemas.ProductColorVariantResponse)
@@ -302,10 +313,9 @@ async def add_color_variant(
         # Return the variant with images
         res = await db.product_color_variants.find_one({"id": v_id})
         res["images"] = await db.product_images.find({"color_variant_id": v_id}).to_list(length=100)
-        return res
+        return strip_oid(res)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to add variant: {str(e)}")
-
 @router.put("/products/{product_id}/variants/{variant_id}", response_model=schemas.ProductColorVariantResponse)
 async def update_color_variant(
     product_id: int,
@@ -343,10 +353,9 @@ async def update_color_variant(
         
         res = await db.product_color_variants.find_one({"id": variant_id})
         res["images"] = await db.product_images.find({"color_variant_id": variant_id}).to_list(length=100)
-        return res
+        return strip_oid(res)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to update variant: {str(e)}")
-
 @router.delete("/products/{product_id}/variants/{variant_id}")
 async def delete_color_variant(
     product_id: int,
@@ -389,4 +398,3 @@ async def upload_image(file: UploadFile = File(...), admin: Any = Depends(auth.g
         return {"image_url": f"/static/uploads/{unique_filename}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save image: {str(e)}")
-from datetime import datetime

@@ -8,6 +8,15 @@ from datetime import datetime
 
 router = APIRouter(prefix="/api", tags=["Orders"])
 
+
+def strip_oid(doc):
+    """Recursively remove MongoDB _id fields."""
+    if isinstance(doc, list):
+        return [strip_oid(d) for d in doc]
+    if isinstance(doc, dict):
+        return {k: strip_oid(v) for k, v in doc.items() if k != "_id"}
+    return doc
+
 razorpay_client = None
 if settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET:
     razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
@@ -108,14 +117,14 @@ async def create_order(order_data: schemas.OrderCreate, db: Any = Depends(databa
         await db.order_items.insert_one(item)
     
     new_order["items"] = items_to_create
-    return new_order
+    return strip_oid(new_order)
 
 @router.get("/orders", response_model=List[schemas.OrderResponse])
 async def get_user_orders(current_user: Any = Depends(auth.get_current_user), db: Any = Depends(database.get_db)):
     orders = await db.orders.find({"user_id": current_user.id}).sort("created_at", -1).to_list(length=100)
     for order in orders:
         order["items"] = await db.order_items.find({"order_id": order["id"]}).to_list(length=100)
-    return orders
+    return strip_oid(orders)
 
 @router.get("/orders/{order_id}", response_model=schemas.OrderResponse)
 async def get_order(order_id: int, current_user: Any = Depends(auth.get_current_user), db: Any = Depends(database.get_db)):
@@ -126,7 +135,7 @@ async def get_order(order_id: int, current_user: Any = Depends(auth.get_current_
         raise HTTPException(status_code=403, detail="Not authorized")
     
     order["items"] = await db.order_items.find({"order_id": order_id}).to_list(length=100)
-    return order
+    return strip_oid(order)
 
 @router.post("/orders/razorpay/create", response_model=schemas.RazorpayOrderResponse)
 async def create_razorpay_payment(data: schemas.RazorpayOrderCreate, db: Any = Depends(database.get_db)):
@@ -193,7 +202,7 @@ async def get_all_orders_admin(admin: Any = Depends(auth.get_admin), db: Any = D
     orders = await db.orders.find().sort("created_at", -1).to_list(length=1000)
     for order in orders:
         order["items"] = await db.order_items.find({"order_id": order["id"]}).to_list(length=100)
-    return orders
+    return strip_oid(orders)
 
 @router.put("/admin/orders/{order_id}/status")
 async def update_order_status(order_id: int, status_update: dict, admin: Any = Depends(auth.get_admin), db: Any = Depends(database.get_db)):

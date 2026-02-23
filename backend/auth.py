@@ -49,14 +49,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         print(f"DEBUG AUTH: user not found for ID {user_id}")
         raise HTTPException(status_code=401, detail="User not found")
     
-    # To maintain compatibility with code that uses user.role, etc.
-    # we can convert the dict to an object-like structure or just use it as is if we refactor rest
-    # For now, let's use a simple Munch or Box like approach or just a class
+    # Remove MongoDB _id (bson.ObjectId) to prevent serialization issues
+    user_clean = {k: v for k, v in user.items() if k != "_id"}
+    
     class UserObject:
         def __init__(self, **entries):
             self.__dict__.update(entries)
     
-    return UserObject(**user)
+    return UserObject(**user_clean)
 
 async def get_admin(current_user: Any = Depends(get_current_user)):
     if current_user.role != "admin":

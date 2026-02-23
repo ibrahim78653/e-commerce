@@ -12,7 +12,8 @@ async def get_all_users(
     db: Any = Depends(database.get_db)
 ):
     users = await db.users.find().skip(skip).limit(limit).to_list(length=limit)
-    return users
+    # Strip MongoDB _id from each user dict
+    return [{k: v for k, v in u.items() if k != "_id"} for u in users]
 
 @router.put("/{user_id}/block")
 async def toggle_user_block(
