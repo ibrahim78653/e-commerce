@@ -26,7 +26,7 @@ async def register(user_data: schemas.UserRegister, db: Any = Depends(database.g
     count_doc = await db.counters.find_one({"_id": "users"})
     if not count_doc:
         max_user = await db.users.find_one(sort=[("id", -1)])
-        start_val = max_user["id"] if max_user else 0
+        start_val = max_user.get("id", 0) if max_user else 0
         await db.counters.update_one({"_id": "users"}, {"$set": {"seq": start_val}}, upsert=True)
 
     new_id = await database.get_next_id(db, "users")

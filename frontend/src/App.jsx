@@ -48,11 +48,7 @@ function App() {
                         <Route path="/register" element={<Register />} />
 
                         {/* Protected Routes */}
-                        <Route path="/checkout" element={
-                            <ProtectedRoute>
-                                <Checkout />
-                            </ProtectedRoute>
-                        } />
+                        <Route path="/checkout" element={<Checkout />} />
                         <Route path="/orders" element={
                             <ProtectedRoute>
                                 <OrdersPage />

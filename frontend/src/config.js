@@ -26,6 +26,7 @@ export const CONFIG = {
     API_BASE_URL: getApiUrl(),
     IMAGE_BASE_URL: getApiUrl(), // Images are served by the backend static route
     RAZORPAY_KEY_ID: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
+    PLACEHOLDER_URL: 'https://placehold.co/400x300?text=Product+Image',
 };
 
 export default CONFIG;

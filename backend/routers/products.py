@@ -140,7 +140,7 @@ async def create_product(product_data: schemas.ProductCreate, db: Any = Depends(
         if not count_doc:
             # Seed from current data
             max_prod = await db.products.find_one(sort=[("id", -1)])
-            start_val = max_prod["id"] if max_prod else 0
+            start_val = max_prod.get("id", 0) if max_prod else 0
             await db.counters.update_one({"_id": "products"}, {"$set": {"seq": start_val}}, upsert=True)
 
         new_id = await get_next_id(db, "products")
@@ -256,7 +256,7 @@ async def create_category(cat_data: schemas.CategoryBase, db: Any = Depends(data
     count_doc = await db.counters.find_one({"_id": "categories"})
     if not count_doc:
         max_cat = await db.categories.find_one(sort=[("id", -1)])
-        start_val = max_cat["id"] if max_cat else 0
+        start_val = max_cat.get("id", 0) if max_cat else 0
         await db.counters.update_one({"_id": "categories"}, {"$set": {"seq": start_val}}, upsert=True)
 
     new_id = await get_next_id(db, "categories")
@@ -282,7 +282,7 @@ async def add_color_variant(
         count_doc = await db.counters.find_one({"_id": "product_color_variants"})
         if not count_doc:
             max_v = await db.product_color_variants.find_one(sort=[("id", -1)])
-            start_val = max_v["id"] if max_v else 0
+            start_val = max_v.get("id", 0) if max_v else 0
             await db.counters.update_one({"_id": "product_color_variants"}, {"$set": {"seq": start_val}}, upsert=True)
 
         v_id = await get_next_id(db, "product_color_variants")

@@ -59,43 +59,50 @@ const Register = () => {
     const passwordStrength = getPasswordStrength(password);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
+        <div className="min-h-screen bg-gradient-premium flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Background decorative elements */}
+            <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-primary-200/20 rounded-full blur-3xl animate-float" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-accent-200/20 rounded-full blur-3xl animate-float shadow-indigo-500/20" style={{ animationDelay: '1.5s' }} />
+
+            <div className="w-full max-w-lg relative z-10">
                 {/* Header */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-10">
+                    <div className="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/30 rotate-3">
+                        <UserPlus className="text-white" size={32} />
+                    </div>
                     <h1 className="text-4xl font-display font-bold text-gray-900 mb-2">
                         Create Account
                     </h1>
                     <p className="text-gray-600">
-                        Join us and start shopping
+                        Join <span className="text-primary-600 font-bold">Burhani Collection</span> and start shopping
                     </p>
                 </div>
 
                 {/* Register Form */}
-                <div className="bg-white rounded-2xl shadow-xl p-8">
+                <div className="glass rounded-3xl shadow-2xl p-10 border border-white/50">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         {/* Register Type Toggle */}
-                        <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                        <div className="flex gap-2 p-1.5 bg-gray-100/50 backdrop-blur rounded-2xl">
                             <button
                                 type="button"
                                 onClick={() => setRegisterType('email')}
-                                className={`flex-1 py-2 rounded-md font-medium transition-all ${registerType === 'email'
-                                        ? 'bg-white text-primary-600 shadow-sm'
-                                        : 'text-gray-600'
+                                className={`flex-1 py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${registerType === 'email'
+                                    ? 'bg-white text-primary-600 shadow-md'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
-                                <Mail className="inline mr-2" size={18} />
+                                <Mail size={18} />
                                 Email
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setRegisterType('phone')}
-                                className={`flex-1 py-2 rounded-md font-medium transition-all ${registerType === 'phone'
-                                        ? 'bg-white text-primary-600 shadow-sm'
-                                        : 'text-gray-600'
+                                className={`flex-1 py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${registerType === 'phone'
+                                    ? 'bg-white text-primary-600 shadow-md'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
-                                <Phone className="inline mr-2" size={18} />
+                                <Phone size={18} />
                                 Phone
                             </button>
                         </div>
@@ -106,6 +113,7 @@ const Register = () => {
                             type="text"
                             icon={User}
                             placeholder="John Doe"
+                            className="rounded-xl shadow-sm border-gray-100"
                             error={errors.full_name?.message}
                             {...register('full_name', {
                                 required: 'Full name is required',
@@ -122,6 +130,7 @@ const Register = () => {
                             type={registerType === 'email' ? 'email' : 'tel'}
                             icon={registerType === 'email' ? Mail : Phone}
                             placeholder={registerType === 'email' ? 'you@example.com' : '9876543210'}
+                            className="rounded-xl shadow-sm border-gray-100"
                             error={errors.identifier?.message}
                             {...register('identifier', {
                                 required: `${registerType === 'email' ? 'Email' : 'Phone'} is required`,
@@ -133,12 +142,13 @@ const Register = () => {
                         />
 
                         {/* Password Input */}
-                        <div>
+                        <div className="space-y-1">
                             <Input
                                 label="Password"
                                 type="password"
                                 icon={Lock}
                                 placeholder="••••••••"
+                                className="rounded-xl shadow-sm border-gray-100"
                                 error={errors.password?.message}
                                 {...register('password', {
                                     required: 'Password is required',
@@ -148,27 +158,27 @@ const Register = () => {
                                     },
                                     pattern: {
                                         value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                                        message: 'Password must contain uppercase, lowercase, and number',
+                                        message: 'Must contain Uppercase, Lowercase & Number',
                                     },
                                 })}
                             />
 
                             {/* Password Strength Indicator */}
                             {password && (
-                                <div className="mt-2">
-                                    <div className="flex gap-1 mb-1">
+                                <div className="px-1 py-1">
+                                    <div className="flex gap-1.5 mb-1.5">
                                         {[1, 2, 3, 4].map((level) => (
                                             <div
                                                 key={level}
-                                                className={`h-1 flex-1 rounded-full transition-all ${level <= passwordStrength.strength
-                                                        ? passwordStrength.color
-                                                        : 'bg-gray-200'
+                                                className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${level <= passwordStrength.strength
+                                                    ? passwordStrength.color
+                                                    : 'bg-gray-200'
                                                     }`}
                                             />
                                         ))}
                                     </div>
-                                    <p className={`text-xs ${passwordStrength.color.replace('bg-', 'text-')}`}>
-                                        {passwordStrength.text}
+                                    <p className={`text-xs font-medium ${passwordStrength.color.replace('bg-', 'text-')}`}>
+                                        Strength: {passwordStrength.text}
                                     </p>
                                 </div>
                             )}
@@ -180,6 +190,7 @@ const Register = () => {
                             type="password"
                             icon={Lock}
                             placeholder="••••••••"
+                            className="rounded-xl shadow-sm border-gray-100"
                             error={errors.confirm_password?.message}
                             {...register('confirm_password', {
                                 required: 'Please confirm your password',
@@ -192,21 +203,20 @@ const Register = () => {
                         <Button
                             type="submit"
                             variant="primary"
-                            className="w-full"
+                            className="w-full py-4 text-lg rounded-2xl shadow-xl shadow-primary-500/20 active:translate-y-0.5 transition-all"
                             isLoading={isLoading}
-                            icon={UserPlus}
                         >
                             Create Account
                         </Button>
                     </form>
 
                     {/* Login Link */}
-                    <div className="mt-6 text-center">
+                    <div className="mt-10 text-center">
                         <p className="text-gray-600">
                             Already have an account?{' '}
                             <Link
                                 to="/login"
-                                className="text-primary-600 hover:text-primary-700 font-semibold"
+                                className="text-primary-600 hover:text-primary-700 font-bold hover:underline"
                             >
                                 Sign In
                             </Link>
@@ -215,12 +225,13 @@ const Register = () => {
                 </div>
 
                 {/* Continue as Guest */}
-                <div className="mt-6 text-center">
+                <div className="mt-8 text-center">
                     <Link
                         to="/"
-                        className="text-gray-600 hover:text-gray-900 font-medium"
+                        className="text-gray-500 hover:text-gray-900 font-medium flex items-center justify-center gap-2 group transition-all"
                     >
-                        ← Back to Home
+                        <span className="group-hover:-translate-x-1 transition-transform">←</span>
+                        Back to Home
                     </Link>
                 </div>
             </div>

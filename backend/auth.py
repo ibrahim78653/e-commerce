@@ -34,29 +34,37 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         user_id = payload.get("sub")
         if user_id is None:
-            print(f"DEBUG AUTH: sub missing in token")
             raise HTTPException(status_code=401, detail="Invalid token: sub missing")
         if payload.get("type") != "access":
-            print(f"DEBUG AUTH: invalid token type: {payload.get('type')}")
             raise HTTPException(status_code=401, detail="Invalid token: incorrect type")
     except JWTError as e:
-        print(f"DEBUG AUTH: JWT decode error: {str(e)}")
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
-    # In MongoDB, we lookup in the 'users' collection
     user = await db.users.find_one({"id": int(user_id)})
     if not user:
-        print(f"DEBUG AUTH: user not found for ID {user_id}")
         raise HTTPException(status_code=401, detail="User not found")
     
-    # Remove MongoDB _id (bson.ObjectId) to prevent serialization issues
     user_clean = {k: v for k, v in user.items() if k != "_id"}
     
     class UserObject:
         def __init__(self, **entries):
             self.__dict__.update(entries)
+            # Add attributes for direct access
+            for k, v in entries.items():
+                setattr(self, k, v)
     
     return UserObject(**user_clean)
+
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)), 
+    db: Any = Depends(database.get_db)
+):
+    if not credentials:
+        return None
+    try:
+        return await get_current_user(credentials, db)
+    except HTTPException:
+        return None
 
 async def get_admin(current_user: Any = Depends(get_current_user)):
     if current_user.role != "admin":

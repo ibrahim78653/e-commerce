@@ -22,7 +22,7 @@ if settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET:
     razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 @router.post("/orders", response_model=schemas.OrderResponse)
-async def create_order(order_data: schemas.OrderCreate, db: Any = Depends(database.get_db), current_user: Optional[Any] = Depends(auth.get_current_user)):
+async def create_order(order_data: schemas.OrderCreate, db: Any = Depends(database.get_db), current_user: Optional[Any] = Depends(auth.get_current_user_optional)):
     total = 0
     items_to_create = []
     
@@ -82,7 +82,7 @@ async def create_order(order_data: schemas.OrderCreate, db: Any = Depends(databa
     count_doc = await db.counters.find_one({"_id": "orders"})
     if not count_doc:
         max_order = await db.orders.find_one(sort=[("id", -1)])
-        start_val = max_order["id"] if max_order else 0
+        start_val = max_order.get("id", 0) if max_order else 0
         await db.counters.update_one({"_id": "orders"}, {"$set": {"seq": start_val}}, upsert=True)
     
     new_id = await database.get_next_id(db, "orders")
@@ -108,7 +108,7 @@ async def create_order(order_data: schemas.OrderCreate, db: Any = Depends(databa
         count_doc = await db.counters.find_one({"_id": "order_items"})
         if not count_doc:
             max_item = await db.order_items.find_one(sort=[("id", -1)])
-            start_val = max_item["id"] if max_item else 0
+            start_val = max_item.get("id", 0) if max_item else 0
             await db.counters.update_one({"_id": "order_items"}, {"$set": {"seq": start_val}}, upsert=True)
             
         item_id = await database.get_next_id(db, "order_items")
@@ -165,7 +165,7 @@ async def verify_payment(data: schemas.RazorpayPaymentVerify, db: Any = Depends(
         raise HTTPException(status_code=400, detail="Payment verification failed")
 
 @router.post("/orders/whatsapp", response_model=schemas.WhatsAppOrderResponse)
-async def create_whatsapp_order(order_data: schemas.WhatsAppOrderCreate, db: Any = Depends(database.get_db), current_user: Optional[Any] = Depends(auth.get_current_user)):
+async def create_whatsapp_order(order_data: schemas.WhatsAppOrderCreate, db: Any = Depends(database.get_db), current_user: Optional[Any] = Depends(auth.get_current_user_optional)):
     standard_data = schemas.OrderCreate(
         customer_name=order_data.customer_name, 
         customer_email=order_data.customer_email,

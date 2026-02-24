@@ -171,7 +171,7 @@ const ProductDetail = () => {
                                     alt={`${product.name} ${index + 1}`}
                                     className="w-full h-full object-contain"
                                     onError={(e) => {
-                                        e.target.src = 'https://via.placeholder.com/600x400?text=Product+Image';
+                                        e.target.src = CONFIG.PLACEHOLDER_URL;
                                     }}
                                 />
                             </Carousel.Item>
@@ -199,7 +199,7 @@ const ProductDetail = () => {
                                         alt={`${product.name} thumb ${index + 1}`}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/100?text=No+Image';
+                                            e.target.src = CONFIG.PLACEHOLDER_URL;
                                         }}
                                     />
                                 </button>
