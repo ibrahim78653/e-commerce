@@ -12,6 +12,13 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./ecommerce.db"
     MONGODB_URL: Optional[str] = None
     DB_NAME: str = "BurhaniCollection"
+
+    @field_validator("MONGODB_URL", mode="before")
+    @classmethod
+    def sanitize_mongodb_url(cls, v: Any) -> Optional[str]:
+        if isinstance(v, str):
+            return v.strip().replace("\\n", "\n").strip()
+        return v
     
     # JWT
     JWT_SECRET_KEY: str = "burhani-super-secret-key-change-this-in-production-2024"

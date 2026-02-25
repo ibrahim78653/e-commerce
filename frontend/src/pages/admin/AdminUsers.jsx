@@ -62,7 +62,7 @@ const AdminUsers = () => {
                             <tr key={user.id}>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center">
-                                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                        <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
                                             <User size={20} />
                                         </div>
                                         <div className="ml-4">
@@ -76,7 +76,7 @@ const AdminUsers = () => {
                                     <div>{user.phone}</div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'admin' ? 'bg-primary-100 text-primary-800' : 'bg-gray-100 text-gray-800'
                                         }`}>
                                         {user.role}
                                     </span>
