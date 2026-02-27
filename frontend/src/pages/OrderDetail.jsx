@@ -135,20 +135,22 @@ const OrderDetail = () => {
                 </Link>
 
                 {/* Download Invoice Button */}
-                <motion.button
-                    id="download-invoice-btn"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleDownloadInvoice}
-                    disabled={downloading}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-60"
-                >
-                    {downloading ? (
-                        <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Generating…</>
-                    ) : (
-                        <><Download size={18} /> Download Invoice</>
-                    )}
-                </motion.button>
+                {!(order.payment_method === 'whatsapp' && order.status?.toLowerCase() === 'pending') && (
+                    <motion.button
+                        id="download-invoice-btn"
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={handleDownloadInvoice}
+                        disabled={downloading}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-60"
+                    >
+                        {downloading ? (
+                            <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Generating…</>
+                        ) : (
+                            <><Download size={18} /> Download Invoice</>
+                        )}
+                    </motion.button>
+                )}
             </div>
 
             {/* Order Header */}
@@ -371,26 +373,35 @@ const OrderDetail = () => {
                         </div>
 
                         {/* Download Invoice CTA */}
-                        <div className="mt-6 pt-5 border-t border-gray-100">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Invoice</p>
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={handleDownloadInvoice}
-                                disabled={downloading}
-                                id="invoice-sidebar-btn"
-                                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-60"
-                            >
-                                {downloading ? (
-                                    <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Generating…</>
-                                ) : (
-                                    <><Download size={16} /> Download PDF Invoice</>
-                                )}
-                            </motion.button>
-                            <p className="text-xs text-gray-400 text-center mt-2">
-                                Invoice #{String(order.id).padStart(5, '0')}
-                            </p>
-                        </div>
+                        {!(order.payment_method === 'whatsapp' && order.status?.toLowerCase() === 'pending') ? (
+                            <div className="mt-6 pt-5 border-t border-gray-100">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Invoice</p>
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={handleDownloadInvoice}
+                                    disabled={downloading}
+                                    id="invoice-sidebar-btn"
+                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-60"
+                                >
+                                    {downloading ? (
+                                        <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Generating…</>
+                                    ) : (
+                                        <><Download size={16} /> Download PDF Invoice</>
+                                    )}
+                                </motion.button>
+                                <p className="text-xs text-gray-400 text-center mt-2">
+                                    Invoice #{String(order.id).padStart(5, '0')}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="mt-6 pt-5 border-t border-gray-100 text-center">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Invoice</p>
+                                <div className="py-3 px-4 bg-gray-50 text-gray-500 rounded-xl font-medium text-sm border border-gray-100 flex items-center justify-center gap-2">
+                                    <Clock size={16} /> Pending Confirmation
+                                </div>
+                            </div>
+                        )}
                     </motion.div>
                 </div>
             </div>
