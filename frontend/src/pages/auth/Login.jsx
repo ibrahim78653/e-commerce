@@ -43,16 +43,17 @@ const Login = () => {
             <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-accent-200/20 rounded-full blur-3xl animate-float shadow-indigo-500/20" style={{ animationDelay: '1.5s' }} />
 
             <div className="w-full max-w-lg relative z-10">
-                {/* Logo/Brand */}
                 <div className="text-center mb-10">
-                    <div className="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/30 -rotate-3">
-                        <LogIn className="text-white" size={32} />
-                    </div>
+                    <img 
+                        src="/logo.jpeg" 
+                        alt="Burhani Collection" 
+                        className="w-24 h-24 object-cover rounded-full mx-auto mb-4 border-2 border-[#D4AF37] shadow-lg"
+                    />
                     <h1 className="text-4xl font-display font-bold text-gray-900 mb-2">
                         Welcome Back
                     </h1>
                     <p className="text-gray-600">
-                        Sign in to <span className="text-primary-600 font-bold">Burhani Collection</span>
+                        Sign in to <span className="text-[#8B7355] font-bold">Burhani Collection</span>
                     </p>
                 </div>
 

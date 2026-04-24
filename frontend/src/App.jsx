@@ -9,6 +9,7 @@ import { CartProvider } from './context/CartContext';
 // Components
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import PageTransition from './components/PageTransition';
 
 // Pages
 import Home from './pages/Home';
@@ -26,9 +27,11 @@ import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 
 import { useState, useEffect } from 'react';
 import useAuthStore from './store/authStore';
+import SplashScreen from './components/SplashScreen';
 
 function App() {
     const { loadUser } = useAuthStore();
+    const [showSplash, setShowSplash] = useState(true);
 
     useEffect(() => {
         loadUser();
@@ -37,47 +40,54 @@ function App() {
     return (
         <BrowserRouter>
             <CartProvider>
-                <div className="min-h-screen bg-gray-50">
-                    <Navbar />
+                <div className="min-h-screen bg-[#FDFBF7]">
+                    <SplashScreen onComplete={() => setShowSplash(false)} />
+                    
+                    {!showSplash && (
+                        <>
+                            <Navbar />
+                            <PageTransition>
+                                <Routes>
+                                    <Route path="/" element={<Home />} />
+                                    <Route path="/product/:id" element={<ProductDetail />} />
+                                    <Route path="/cart" element={<CartPage />} />
+                                    <Route path="/login" element={<Login />} />
+                                    <Route path="/register" element={<Register />} />
 
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/product/:id" element={<ProductDetail />} />
-                        <Route path="/cart" element={<CartPage />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
+                                    {/* Protected Routes */}
+                                    <Route path="/checkout" element={<Checkout />} />
+                                    <Route path="/orders" element={
+                                        <ProtectedRoute>
+                                            <OrdersPage />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/orders/:id" element={
+                                        <ProtectedRoute>
+                                            <OrderDetail />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/profile" element={
+                                        <ProtectedRoute>
+                                            <ProfilePage />
+                                        </ProtectedRoute>
+                                    } />
 
-                        {/* Protected Routes */}
-                        <Route path="/checkout" element={<Checkout />} />
-                        <Route path="/orders" element={
-                            <ProtectedRoute>
-                                <OrdersPage />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/orders/:id" element={
-                            <ProtectedRoute>
-                                <OrderDetail />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/profile" element={
-                            <ProtectedRoute>
-                                <ProfilePage />
-                            </ProtectedRoute>
-                        } />
-
-                        {/* Admin Routes */}
-                        <Route path="/admin/login" element={<AdminLogin />} />
-                        <Route path="/admin" element={
-                            <ProtectedRoute adminOnly>
-                                <AdminDashboard />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/orders/:id" element={
-                            <ProtectedRoute adminOnly>
-                                <AdminOrderDetail />
-                            </ProtectedRoute>
-                        } />
-                    </Routes>
+                                    {/* Admin Routes */}
+                                    <Route path="/admin/login" element={<AdminLogin />} />
+                                    <Route path="/admin" element={
+                                        <ProtectedRoute adminOnly>
+                                            <AdminDashboard />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/admin/orders/:id" element={
+                                        <ProtectedRoute adminOnly>
+                                            <AdminOrderDetail />
+                                        </ProtectedRoute>
+                                    } />
+                                </Routes>
+                            </PageTransition>
+                        </>
+                    )}
 
                     {/* Toast Notifications */}
                     <Toaster

@@ -30,12 +30,13 @@ const Navbar = () => {
         <nav className="glass shadow-sm sticky top-0 z-50">
             <div className="container">
                 <div className="flex items-center justify-between h-16">
-                    {/* Logo */}
-                    <Link to="/" className="flex items-center space-x-2">
-                        <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-xl">B</span>
-                        </div>
-                        <span className="text-xl font-display font-bold text-gray-900 hidden sm:block">
+                    <Link to="/" className="flex items-center space-x-3">
+                        <img 
+                            src="/logo.jpeg" 
+                            alt="Burhani Collection" 
+                            className="w-12 h-12 object-cover rounded-full border border-gray-200 shadow-sm hover:scale-110 transition-transform duration-300"
+                        />
+                        <span className="text-xl font-display font-bold text-[#4A4A4A] hidden sm:block tracking-wide">
                             Burhani Collection
                         </span>
                     </Link>

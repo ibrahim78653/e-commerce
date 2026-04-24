@@ -116,24 +116,24 @@ const ProductCard = ({ product }) => {
                 <div className="p-4 flex flex-col flex-1">
                     {/* Category */}
                     {product.category && (
-                        <p className="text-xs text-primary-500 font-bold uppercase tracking-wider mb-1">
+                        <p className="text-sm text-primary-500 font-bold uppercase tracking-wider mb-1">
                             {product.category.name}
                         </p>
                     )}
 
                     {/* Name */}
-                    <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 leading-tight group-hover:text-primary-600 transition-colors">
+                    <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1 leading-tight group-hover:text-primary-600 transition-colors">
                         {product.name}
                     </h3>
 
                     <div className="mt-auto">
                         <div className="flex items-center justify-between gap-2 border-t border-gray-50 pt-3">
                             <div className="flex flex-col">
-                                <span className="text-xl font-black text-gray-900 leading-none">
+                                <span className="text-2xl font-black text-gray-900 leading-none">
                                     ₹{price.toLocaleString()}
                                 </span>
                                 {hasDiscount && (
-                                    <span className="text-xs text-gray-400 line-through mt-0.5">
+                                    <span className="text-sm text-gray-400 line-through mt-0.5">
                                         ₹{product.original_price.toLocaleString()}
                                     </span>
                                 )}

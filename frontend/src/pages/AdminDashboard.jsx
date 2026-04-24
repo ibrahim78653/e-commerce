@@ -16,12 +16,14 @@ const AdminDashboard = () => {
         <div className="min-h-screen bg-gray-100 flex">
             {/* Sidebar */}
             <aside className="w-64 bg-white shadow-md fixed h-full z-10 left-0 top-0 hidden md:flex flex-col">
-                <div className="p-6 border-b flex justify-between items-center">
-                    <h1 className="text-xl font-bold flex items-center gap-2 text-primary-600">
-                        <LayoutDashboard size={24} />
-                        Admin
-                    </h1>
-                    <Link to="/" className="p-2 hover:bg-gray-100 rounded-full text-gray-500" title="View Website">
+                <div className="p-6 border-b flex justify-between items-center bg-[#FAF3F3]">
+                    <div className="flex items-center gap-3">
+                        <img src="/logo.jpeg" alt="Admin" className="w-8 h-8 object-cover rounded-full border border-gray-200" />
+                        <h1 className="text-xl font-bold text-[#4A4A4A]">
+                            Admin
+                        </h1>
+                    </div>
+                    <Link to="/" className="p-2 hover:bg-white/50 rounded-full text-gray-500" title="View Website">
                         <Eye size={20} />
                     </Link>
                 </div>

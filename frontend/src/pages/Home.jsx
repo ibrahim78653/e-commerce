@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { productsAPI, categoriesAPI } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ui/Skeleton';
@@ -114,7 +114,9 @@ const Home = () => {
                         className="text-center"
                     >
                         <h1 className="text-6xl md:text-7xl font-display font-black mb-6 animate-float">
-                            <span className="text-gradient">Burhani Collection</span>
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-600 via-pink-500 to-purple-600">
+                                Burhani Collection
+                            </span>
                         </h1>
                         <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto font-medium">
                             Experience the pinnacle of premium fashion. Curated collections for those who appreciate quality and style.
@@ -237,30 +239,20 @@ const Home = () => {
                             </div>
                         ) : products.length > 0 ? (
                             <>
-                                <motion.div
-                                    initial="hidden"
-                                    animate="visible"
-                                    variants={{
-                                        visible: {
-                                            transition: {
-                                                staggerChildren: 0.1,
-                                            },
-                                        },
-                                    }}
-                                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                                >
-                                    {products.map((product) => (
-                                        <motion.div
-                                            key={product.id}
-                                            variants={{
-                                                hidden: { opacity: 0, y: 20 },
-                                                visible: { opacity: 1, y: 0 },
-                                            }}
-                                        >
-                                            <ProductCard product={product} />
-                                        </motion.div>
-                                    ))}
-                                </motion.div>
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={pagination.page}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                                    >
+                                        {products.map((product) => (
+                                            <ProductCard key={product.id} product={product} />
+                                        ))}
+                                    </motion.div>
+                                </AnimatePresence>
 
                                 {/* Pagination */}
                                 {pagination.pages > 1 && (
