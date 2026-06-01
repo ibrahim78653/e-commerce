@@ -3,9 +3,12 @@ import schemas, auth, database
 from typing import List, Optional, Any
 import os
 import shutil
+import logging
 from config import settings
 import math
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["Products"])
 
@@ -17,6 +20,97 @@ def strip_oid(doc):
     if isinstance(doc, dict):
         return {k: strip_oid(v) for k, v in doc.items() if k != "_id"}
     return doc
+
+
+async def sync_main_to_excel(product_id_int: int, db: Any):
+    try:
+        p = await db.products.find_one({"id": product_id_int})
+        if not p:
+            return
+        
+        pid = p.get("product_id")
+        if not pid or not str(pid).strip():
+            pid = f"PROD-{str(product_id_int).zfill(3)}"
+            await db.products.update_one({"id": product_id_int}, {"$set": {"product_id": pid}})
+            
+        # Category resolution
+        category_name = p.get("category")
+        if not category_name and p.get("category_id"):
+            cat = await db.categories.find_one({"id": p["category_id"]})
+            if cat:
+                category_name = cat.get("name")
+        if not category_name:
+            category_name = "Common"
+            
+        # Images resolution
+        images = await db.product_images.find({"product_id": product_id_int, "color_variant_id": None}).sort("id", 1).to_list(length=100)
+        image_urls = [img["image_url"] for img in images if img.get("image_url")]
+        if not image_urls:
+            # Fallback to variant images if no base images are defined
+            variant_images = await db.product_images.find({"product_id": product_id_int, "color_variant_id": {"$ne": None}}).sort("id", 1).to_list(length=100)
+            image_urls = list(dict.fromkeys([img["image_url"] for img in variant_images if img.get("image_url")]))
+            
+        # Colors & Sizes resolution
+        colors_str = p.get("colors") or ""
+        colors = [c.strip() for c in colors_str.split(",") if c.strip()]
+        if not colors:
+            variants = await db.product_color_variants.find({"product_id": product_id_int}).to_list(length=100)
+            colors = [v["color_name"] for v in variants if v.get("color_name")]
+            if colors:
+                colors_str = ",".join(colors)
+                await db.products.update_one({"id": product_id_int}, {"$set": {"colors": colors_str}})
+                
+        sizes_str = p.get("sizes") or ""
+        sizes = [s.strip() for s in sizes_str.split(",") if s.strip()]
+        
+        # Upsert excel_products
+        excel_existing = await db.excel_products.find_one({"product_id": pid})
+        if excel_existing:
+            await db.excel_products.update_one(
+                {"product_id": pid},
+                {"$set": {
+                    "product_name": p.get("name"),
+                    "original_price": p.get("original_price", 0),
+                    "discounted_price": p.get("discounted_price"),
+                    "description": p.get("description", ""),
+                    "is_active": p.get("is_active", True),
+                    "stock": p.get("stock", 0),
+                    "category": category_name,
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+        else:
+            await db.excel_products.insert_one({
+                "product_id": pid,
+                "product_name": p.get("name"),
+                "original_price": p.get("original_price", 0),
+                "discounted_price": p.get("discounted_price"),
+                "description": p.get("description", ""),
+                "is_active": p.get("is_active", True),
+                "stock": p.get("stock", 0),
+                "category": category_name,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            })
+            
+        # Sync relations
+        await db.excel_product_colors.delete_many({"product_id": pid})
+        await db.excel_product_sizes.delete_many({"product_id": pid})
+        await db.excel_product_images.delete_many({"product_id": pid})
+        
+        for c in colors:
+            await db.excel_product_colors.insert_one({"product_id": pid, "color_name": c})
+        for s in sizes:
+            await db.excel_product_sizes.insert_one({"product_id": pid, "size_value": s})
+        for idx, img_url in enumerate(image_urls):
+            await db.excel_product_images.insert_one({
+                "product_id": pid,
+                "image_url": img_url,
+                "sort_order": idx
+            })
+    except Exception as e:
+        print(f"Error in sync_main_to_excel for product {product_id_int}: {e}")
+
 
 @router.get("/products", response_model=schemas.ProductListResponse)
 async def get_products(
@@ -60,23 +154,28 @@ async def get_products(
 
     direction = -1 if sort_order == "desc" else 1
     
-    print(f"DEBUG: filt={filt}")
+    logger.debug(f"Products query filter: {filt}")
     total = await db.products.count_documents(filt)
-    print(f"DEBUG: total found={total}")
+    logger.debug(f"Products total count: {total}")
     pages = math.ceil(total / page_size) if page_size > 0 else 1
     offset = (page - 1) * page_size
     
     cursor = db.products.find(filt).sort(sort_field, direction).skip(offset).limit(page_size)
     items = await cursor.to_list(length=page_size)
-    print(f"DEBUG: items fetched={len(items)}")
+    logger.debug(f"Products items fetched: {len(items)}")
 
     # Fetch categories, images, and variants for these products
     # This is a bit more manual in MongoDB
     populated_items = []
     for item in items:
-        # Category
+        # Category — always set key (even if None) to satisfy response schema
+        item["category"] = None
         if item.get("category_id"):
-            item["category"] = await db.categories.find_one({"id": item["category_id"]})
+            cat = await db.categories.find_one({"id": item["category_id"]})
+            if cat:
+                item["category"] = strip_oid(cat)
+        elif item.get("category"):
+            item["category"] = {"id": None, "name": item.get("category"), "description": ""}
         
         # Images (base images have color_variant_id = None or null)
         item["images"] = await db.product_images.find({"product_id": item["id"], "color_variant_id": None}).to_list(length=100)
@@ -103,9 +202,14 @@ async def get_product(product_id: int, db: Any = Depends(database.get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    # Populate relationships
+    # Populate relationships — always set key to satisfy response schema
+    product["category"] = None
     if product.get("category_id"):
-        product["category"] = await db.categories.find_one({"id": product["category_id"]})
+        cat = await db.categories.find_one({"id": product["category_id"]})
+        if cat:
+            product["category"] = strip_oid(cat)
+    elif product.get("category"):
+        product["category"] = {"id": None, "name": product.get("category"), "description": ""}
     
     product["images"] = await db.product_images.find({"product_id": product_id, "color_variant_id": None}).to_list(length=100)
     
@@ -147,6 +251,13 @@ async def create_product(product_data: schemas.ProductCreate, db: Any = Depends(
         
         product_dict = product_data.dict(exclude={'image_urls', 'color_variants'})
         product_dict["id"] = new_id
+        if not product_dict.get("product_id") or not str(product_dict.get("product_id")).strip():
+            product_dict["product_id"] = f"PROD-{str(new_id).zfill(3)}"
+        else:
+            # Check for conflict
+            conflict = await db.products.find_one({"product_id": product_dict["product_id"]})
+            if conflict:
+                raise HTTPException(status_code=400, detail="Product ID already exists.")
         
         await db.products.insert_one(product_dict)
         
@@ -189,6 +300,7 @@ async def create_product(product_data: schemas.ProductCreate, db: Any = Depends(
                 }
                 await db.product_images.insert_one(variant_img)
         
+        await sync_main_to_excel(new_id, db)
         return await get_product(new_id, db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to create product: {str(e)}")
@@ -209,6 +321,12 @@ async def update_product(product_id: int, product_data: schemas.ProductCreate, d
     try:
         # Update basic fields
         update_dict = product_data.dict(exclude={'image_urls', 'color_variants'})
+        
+        if update_dict.get("product_id"):
+            conflict = await db.products.find_one({"product_id": update_dict["product_id"], "id": {"$ne": product_id}})
+            if conflict:
+                raise HTTPException(status_code=400, detail="Product ID already exists.")
+                
         await db.products.update_one({"id": product_id}, {"$set": update_dict})
         
         # Update base images if provided
@@ -231,6 +349,7 @@ async def update_product(product_id: int, product_data: schemas.ProductCreate, d
                 }
                 await db.product_images.insert_one(img)
 
+        await sync_main_to_excel(product_id, db)
         return await get_product(product_id, db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to update product: {str(e)}")
@@ -242,6 +361,7 @@ async def delete_product(product_id: int, db: Any = Depends(database.get_db), ad
         raise HTTPException(status_code=404, detail="Product not found")
     
     await db.products.update_one({"id": product_id}, {"$set": {"is_active": False}})
+    await sync_main_to_excel(product_id, db)
     return {"message": "Product deactivated successfully"}
 
 # Categories
@@ -313,6 +433,7 @@ async def add_color_variant(
         # Return the variant with images
         res = await db.product_color_variants.find_one({"id": v_id})
         res["images"] = await db.product_images.find({"color_variant_id": v_id}).to_list(length=100)
+        await sync_main_to_excel(product_id, db)
         return strip_oid(res)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to add variant: {str(e)}")
@@ -353,6 +474,7 @@ async def update_color_variant(
         
         res = await db.product_color_variants.find_one({"id": variant_id})
         res["images"] = await db.product_images.find({"color_variant_id": variant_id}).to_list(length=100)
+        await sync_main_to_excel(product_id, db)
         return strip_oid(res)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to update variant: {str(e)}")
@@ -369,7 +491,59 @@ async def delete_color_variant(
     
     await db.product_color_variants.delete_one({"id": variant_id})
     await db.product_images.delete_many({"color_variant_id": variant_id})
+    await sync_main_to_excel(product_id, db)
     return {"message": "Variant deleted successfully"}
+
+# Related Products
+@router.get("/products/{product_id}/related", response_model=schemas.ProductListResponse)
+async def get_related_products(product_id: int, limit: int = 8, db: Any = Depends(database.get_db)):
+    product = await db.products.find_one({"id": product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    category_id = product.get("category_id")
+    filt = {"is_active": True, "id": {"$ne": product_id}}
+    if category_id:
+        filt["category_id"] = category_id
+
+    items = await db.products.find(filt).limit(limit).to_list(length=limit)
+
+    # If not enough from same category, pad with other active products
+    if len(items) < limit:
+        existing_ids = [p["id"] for p in items] + [product_id]
+        extra = await db.products.find(
+            {"is_active": True, "id": {"$nin": existing_ids}}
+        ).limit(limit - len(items)).to_list(length=limit)
+        items.extend(extra)
+
+    populated = []
+    for item in items:
+        item["category"] = None
+        if item.get("category_id"):
+            cat = await db.categories.find_one({"id": item["category_id"]})
+            if cat:
+                item["category"] = strip_oid(cat)
+        elif item.get("category"):
+            item["category"] = {"id": None, "name": item.get("category"), "description": ""}
+
+        item["images"] = await db.product_images.find(
+            {"product_id": item["id"], "color_variant_id": None}
+        ).to_list(length=100)
+
+        variants = await db.product_color_variants.find({"product_id": item["id"]}).to_list(length=100)
+        for v in variants:
+            v["images"] = await db.product_images.find({"color_variant_id": v["id"]}).to_list(length=100)
+        item["color_variants"] = variants
+        populated.append(item)
+
+    return {
+        "items": strip_oid(populated),
+        "total": len(populated),
+        "page": 1,
+        "page_size": limit,
+        "pages": 1
+    }
+
 
 # Image Upload
 @router.post("/upload/image")

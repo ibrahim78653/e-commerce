@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import useAuthStore from '../store/authStore';
 import { Navigate, Link } from 'react-router-dom';
-import { Package, ShoppingCart, Users, LogOut, LayoutDashboard, Eye } from 'lucide-react';
+import { Package, ShoppingCart, Users, LogOut, Eye, FileSpreadsheet, Image as ImageIcon } from 'lucide-react';
 import AdminProducts from './admin/AdminProducts';
 import AdminOrders from './admin/AdminOrders';
 import AdminUsers from './admin/AdminUsers';
+import ExcelProductManager from './admin/ExcelProductManager';
+import BulkImageImport from './admin/BulkImageImport';
+import AdminStats from './admin/AdminStats';
+import { Activity } from 'lucide-react';
 
 const AdminDashboard = () => {
     const { user, isAuthenticated, logout } = useAuthStore();
-    const [activeTab, setActiveTab] = useState('products');
+    const [activeTab, setActiveTab] = useState('stats');
 
     if (!isAuthenticated || user?.role !== 'admin') return <Navigate to="/admin/login" />;
 
@@ -18,7 +22,7 @@ const AdminDashboard = () => {
             <aside className="w-64 bg-white shadow-md fixed h-full z-10 left-0 top-0 hidden md:flex flex-col">
                 <div className="p-6 border-b flex justify-between items-center bg-[#FAF3F3]">
                     <div className="flex items-center gap-3">
-                        <img src="/logo.jpeg" alt="Admin" className="w-8 h-8 object-cover rounded-full border border-gray-200" />
+                        <img src="/logo-best.jpeg" alt="Admin" className="w-10 h-10 object-cover rounded-full" />
                         <h1 className="text-xl font-bold text-[#4A4A4A]">
                             Admin
                         </h1>
@@ -28,7 +32,14 @@ const AdminDashboard = () => {
                     </Link>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2">
+                <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                    <button
+                        onClick={() => setActiveTab('stats')}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'stats' ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                    >
+                        <Activity size={20} /> Overview
+                    </button>
                     <button
                         onClick={() => setActiveTab('products')}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'products' ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
@@ -50,6 +61,20 @@ const AdminDashboard = () => {
                     >
                         <Users size={20} /> Users
                     </button>
+                    <button
+                        onClick={() => setActiveTab('excel')}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'excel' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                    >
+                        <FileSpreadsheet size={20} /> Excel Manager
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('images')}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'images' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                    >
+                        <ImageIcon size={20} /> Bulk Images
+                    </button>
                 </nav>
 
                 <div className="p-4 border-t">
@@ -69,18 +94,24 @@ const AdminDashboard = () => {
             {/* Main Content */}
             <main className="flex-1 md:ml-64 p-8">
                 {/* Mobile Header */}
-                <div className="md:hidden flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm">
+                <div className="md:hidden flex flex-wrap justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm">
                     <h1 className="text-lg font-bold">Admin Portal</h1>
-                    <div className="flex gap-2">
-                        <button onClick={() => setActiveTab('products')} className={`p-2 rounded ${activeTab === 'products' ? 'bg-gray-100' : ''}`}><Package /></button>
+                    <div className="flex gap-2 flex-wrap mt-2 sm:mt-0">
+                        <button onClick={() => setActiveTab('stats')} className={`p-2 rounded ${activeTab === 'stats' ? 'bg-gray-100 text-red-600' : ''}`}><Activity size={20}/></button>
+                        <button onClick={() => setActiveTab('products')} className={`p-2 rounded ${activeTab === 'products' ? 'bg-gray-100 text-red-600' : ''}`}><Package size={20}/></button>
                         <button onClick={() => setActiveTab('orders')} className={`p-2 rounded ${activeTab === 'orders' ? 'bg-gray-100' : ''}`}><ShoppingCart /></button>
                         <button onClick={() => setActiveTab('users')} className={`p-2 rounded ${activeTab === 'users' ? 'bg-gray-100' : ''}`}><Users /></button>
+                        <button onClick={() => setActiveTab('excel')} className={`p-2 rounded ${activeTab === 'excel' ? 'bg-emerald-100 text-emerald-600' : ''}`}><FileSpreadsheet /></button>
+                        <button onClick={() => setActiveTab('images')} className={`p-2 rounded ${activeTab === 'images' ? 'bg-emerald-100 text-emerald-600' : ''}`}><ImageIcon /></button>
                     </div>
                 </div>
 
+                {activeTab === 'stats' && <AdminStats />}
                 {activeTab === 'products' && <AdminProducts />}
                 {activeTab === 'orders' && <AdminOrders />}
                 {activeTab === 'users' && <AdminUsers />}
+                {activeTab === 'excel' && <ExcelProductManager />}
+                {activeTab === 'images' && <BulkImageImport />}
             </main>
         </div>
     );

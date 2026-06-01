@@ -26,7 +26,7 @@ const AdminLogin = () => {
         <div className="min-h-screen bg-[#FAF3F3] flex items-center justify-center p-4">
             <div className="glass rounded-3xl shadow-2xl p-10 border border-white/50 w-full max-w-md bg-white">
                 <div className="text-center mb-8">
-                    <img src="/logo.jpeg" alt="Burhani Collection" className="w-20 h-20 object-cover rounded-full mx-auto mb-4 border-2 border-[#D4AF37] shadow-md" />
+                    <img src="/logo-best.jpeg" alt="Burhani Collection" className="w-24 h-24 object-cover rounded-full mx-auto mb-4" />
                     <h2 className="text-3xl font-display font-bold text-[#4A4A4A]">Admin Login</h2>
                     <p className="text-gray-500 mt-2 italic font-light">"Where Style Meets Tradition"</p>
                 </div>

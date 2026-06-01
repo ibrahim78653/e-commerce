@@ -1,5 +1,5 @@
 /* Tailwind CSS directives */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+/* Google Fonts loaded non-blocking via <link> in index.html */
 
 @tailwind base;
 @tailwind components;
@@ -26,7 +26,6 @@
 
   body {
     @apply bg-[#FDFBF7] text-gray-900 font-sans antialiased selection:bg-primary-100 selection:text-primary-900;
-    text-decoration: none !important;
   }
 
   h1,
@@ -57,14 +56,14 @@
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, #ef4444 0%, #ec4899 50%, #8b5cf6 100%);
-    @apply text-white border-0 shadow-lg shadow-red-500/25 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #be123c 0%, #e11d48 50%, #fb7185 100%);
+    @apply text-white border-0 shadow-lg shadow-primary-500/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
     background-size: 200% auto;
   }
 
   .btn-primary:hover {
     background-position: right center;
-    @apply shadow-xl shadow-red-500/40 -translate-y-0.5;
+    @apply shadow-xl shadow-primary-500/40 -translate-y-0.5;
     filter: brightness(1.1);
   }
 
@@ -116,13 +115,13 @@
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-red-600 via-red-500 to-accent-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-primary-500 to-primary-400;
   }
 
   .bg-gradient-premium {
-    background: radial-gradient(circle at top right, #fee2e2, transparent),
-      radial-gradient(circle at bottom left, #e0e7ff, transparent),
-      #f8fafc;
+    background: radial-gradient(circle at top right, #ffe4e6, transparent 60%),
+      radial-gradient(circle at bottom left, #e0e7ff, transparent 60%),
+      #ffffff;
   }
 }
 
@@ -156,4 +155,70 @@
 
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
+}
+
+/* =====================================================
+   Minimal Bootstrap Carousel CSS
+   Replaces bootstrap.min.css (~190 KB) — only the
+   carousel classes used by ProductDetail are included.
+   ===================================================== */
+.carousel { position: relative; }
+.carousel-inner { position: relative; width: 100%; overflow: hidden; }
+.carousel-item {
+  position: relative; display: none; float: left; width: 100%;
+  margin-right: -100%; backface-visibility: hidden;
+  transition: transform .6s ease-in-out;
+}
+.carousel-item.active,
+.carousel-item-next,
+.carousel-item-prev { display: block; }
+.carousel-item-next:not(.carousel-item-start),
+.active.carousel-item-end { transform: translateX(100%); }
+.carousel-item-prev:not(.carousel-item-end),
+.active.carousel-item-start { transform: translateX(-100%); }
+.carousel-control-prev,
+.carousel-control-next {
+  position: absolute; top: 0; bottom: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 15%; padding: 0; color: #fff;
+  text-align: center; background: none; border: 0; opacity: .5;
+  transition: opacity .15s ease;
+}
+.carousel-control-prev { left: 0; }
+.carousel-control-next { right: 0; }
+.carousel-control-prev:hover,
+.carousel-control-next:hover { color: #fff; opacity: .9; }
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  display: inline-block; width: 2rem; height: 2rem;
+  background-repeat: no-repeat; background-position: 50%;
+  background-size: 100% 100%;
+}
+.carousel-control-prev-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z'/%3e%3c/svg%3e");
+}
+.carousel-control-next-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+}
+.carousel-indicators {
+  position: absolute; right: 0; bottom: 0; left: 0; z-index: 2;
+  display: flex; justify-content: center; padding: 0;
+  margin-right: 15%; margin-bottom: 1rem; margin-left: 15%;
+  list-style: none;
+}
+.carousel-indicators [data-bs-target] {
+  box-sizing: content-box; flex: 0 1 30px; height: 3px;
+  padding: 0; margin-right: 3px; margin-left: 3px;
+  cursor: pointer; background-color: #fff; border: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent; opacity: .5;
+  transition: opacity .6s ease;
+}
+.carousel-indicators button { opacity: .5; }
+.carousel-indicators .active,
+.carousel-indicators button.active { opacity: 1; }
+.carousel-caption {
+  position: absolute; right: 15%; bottom: 1.25rem; left: 15%;
+  padding-top: 1.25rem; padding-bottom: 1.25rem;
+  color: #fff; text-align: center;
 }

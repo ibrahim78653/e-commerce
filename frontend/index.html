@@ -5,13 +5,37 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
+    
+    <!-- SEO Meta Tags -->
     <meta name="description" content="Burhani Collection - Where Style Meets Tradition. Premium fashion and collection." />
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
+    <meta name="keywords" content="Burhani Collection, fashion, premium clothing, traditional wear, modern style" />
+    <meta name="author" content="Burhani Collection" />
+    <link rel="canonical" href="https://www.burhanicollection.com/" />
+    
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Burhani Collection - Premium Fashion" />
+    <meta property="og:description" content="Where Style Meets Tradition. Premium fashion and collection." />
+    <meta property="og:image" content="/logo-best.jpeg" />
+    
+    <!-- Performance: Preconnect & DNS Prefetch -->
+    <!-- Google Fonts: preconnect + non-blocking stylesheet (replaces render-blocking @import in CSS) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap">
+    </noscript>
+    <!-- Razorpay -->
+    <link rel="preconnect" href="https://checkout.razorpay.com" crossorigin />
+    <link rel="dns-prefetch" href="https://checkout.razorpay.com" />
+    
+    <link rel="icon" type="image/jpeg" href="/logo-best.jpeg" />
+    <link rel="apple-touch-icon" href="/logo-best.jpeg" />
     <title>Burhani Collection - Where Style Meets Tradition</title>
     
-    <!-- Razorpay SDK -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- Razorpay SDK (Deferred so it doesn't block rendering) -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
   </head>
   <body>
     <div id="root"></div>

@@ -11,7 +11,7 @@ const getApiUrl = () => {
 
     // 2. Development: If running on localhost, default to local backend
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:8000';
+        return 'http://localhost:8020';
     }
 
     // 3. Problem: In production, we MUST have VITE_API_BASE_URL set.

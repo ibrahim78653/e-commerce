@@ -2,6 +2,7 @@
  * Main App Component
  * Routes and context providers
  */
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
@@ -11,19 +12,20 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import PageTransition from './components/PageTransition';
 
-// Pages
-import Home from './pages/Home';
-import ProductDetail from './pages/ProductDetail';
-import CartPage from './pages/CartPage';
-import Checkout from './pages/Checkout';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import OrdersPage from './pages/OrdersPage';
-import OrderDetail from './pages/OrderDetail';
-import ProfilePage from './pages/ProfilePage';
-import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminOrderDetail from './pages/admin/AdminOrderDetail';
+// Lazy-loaded Pages
+const Home = lazy(() => import('./pages/Home'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Login = lazy(() => import('./pages/auth/Login'));
+const Register = lazy(() => import('./pages/auth/Register'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const OrderDetail = lazy(() => import('./pages/OrderDetail'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const AdminLogin = lazy(() => import('./pages/AdminLogin'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminOrderDetail = lazy(() => import('./pages/admin/AdminOrderDetail'));
 
 import { useState, useEffect } from 'react';
 import useAuthStore from './store/authStore';
@@ -47,44 +49,51 @@ function App() {
                         <>
                             <Navbar />
                             <PageTransition>
-                                <Routes>
-                                    <Route path="/" element={<Home />} />
-                                    <Route path="/product/:id" element={<ProductDetail />} />
-                                    <Route path="/cart" element={<CartPage />} />
-                                    <Route path="/login" element={<Login />} />
-                                    <Route path="/register" element={<Register />} />
+                                    <Suspense fallback={<div className="min-h-[50vh] flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div></div>}>
+                                        <Routes>
+                                            <Route path="/" element={<Home />} />
+                                            <Route path="/product/:id" element={<ProductDetail />} />
+                                            <Route path="/cart" element={<CartPage />} />
+                                            <Route path="/login" element={<Login />} />
+                                            <Route path="/register" element={<Register />} />
 
-                                    {/* Protected Routes */}
-                                    <Route path="/checkout" element={<Checkout />} />
-                                    <Route path="/orders" element={
-                                        <ProtectedRoute>
-                                            <OrdersPage />
-                                        </ProtectedRoute>
-                                    } />
-                                    <Route path="/orders/:id" element={
-                                        <ProtectedRoute>
-                                            <OrderDetail />
-                                        </ProtectedRoute>
-                                    } />
-                                    <Route path="/profile" element={
-                                        <ProtectedRoute>
-                                            <ProfilePage />
-                                        </ProtectedRoute>
-                                    } />
+                                            {/* Protected Routes */}
+                                            <Route path="/checkout" element={<Checkout />} />
+                                            <Route path="/orders" element={
+                                                <ProtectedRoute>
+                                                    <OrdersPage />
+                                                </ProtectedRoute>
+                                            } />
+                                            <Route path="/orders/:id" element={
+                                                <ProtectedRoute>
+                                                    <OrderDetail />
+                                                </ProtectedRoute>
+                                            } />
+                                            <Route path="/profile" element={
+                                                <ProtectedRoute>
+                                                    <ProfilePage />
+                                                </ProtectedRoute>
+                                            } />
+                                            <Route path="/wishlist" element={
+                                                <ProtectedRoute>
+                                                    <WishlistPage />
+                                                </ProtectedRoute>
+                                            } />
 
-                                    {/* Admin Routes */}
-                                    <Route path="/admin/login" element={<AdminLogin />} />
-                                    <Route path="/admin" element={
-                                        <ProtectedRoute adminOnly>
-                                            <AdminDashboard />
-                                        </ProtectedRoute>
-                                    } />
-                                    <Route path="/admin/orders/:id" element={
-                                        <ProtectedRoute adminOnly>
-                                            <AdminOrderDetail />
-                                        </ProtectedRoute>
-                                    } />
-                                </Routes>
+                                            {/* Admin Routes */}
+                                            <Route path="/admin/login" element={<AdminLogin />} />
+                                            <Route path="/admin" element={
+                                                <ProtectedRoute adminOnly>
+                                                    <AdminDashboard />
+                                                </ProtectedRoute>
+                                            } />
+                                            <Route path="/admin/orders/:id" element={
+                                                <ProtectedRoute adminOnly>
+                                                    <AdminOrderDetail />
+                                                </ProtectedRoute>
+                                            } />
+                                        </Routes>
+                                    </Suspense>
                             </PageTransition>
                         </>
                     )}

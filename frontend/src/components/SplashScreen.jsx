@@ -5,10 +5,11 @@ const SplashScreen = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
+    // Always show for 3 seconds on every page load
     const timer = setTimeout(() => {
       setIsVisible(false);
       if (onComplete) onComplete();
-    }, 5500); // Show for 5.5 seconds
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [onComplete]);
@@ -17,85 +18,120 @@ const SplashScreen = ({ onComplete }) => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
+          key="splash"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#FAF3F3] text-[#4A4A4A]"
+          transition={{ duration: 0.6, ease: 'easeInOut' }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #1a0a00 0%, #3b1a05 40%, #2a1000 100%)',
+          }}
         >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+          {/* Soft radial glow behind logo */}
+          <div style={{
+            position: 'absolute',
+            width: '380px',
+            height: '380px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(212,175,55,0.18) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Logo */}
+          <motion.img
+            src="/logo-best.jpeg"
+            alt="Burhani Collection Logo"
+            initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="flex flex-col items-center text-center"
+            transition={{ duration: 0.9, ease: 'easeOut' }}
+            style={{
+              width: '160px',
+              height: '160px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '3px solid rgba(212,175,55,0.6)',
+              boxShadow: '0 0 40px rgba(212,175,55,0.3)',
+              marginBottom: '28px',
+            }}
+          />
+
+          {/* Brand Name */}
+          <motion.h1
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+            style={{
+              fontFamily: '"Times New Roman", Times, serif',
+              fontSize: 'clamp(22px, 5vw, 38px)',
+              letterSpacing: '0.35em',
+              color: '#D4AF37',
+              textTransform: 'uppercase',
+              margin: '0 0 10px 0',
+              fontWeight: 700,
+              textShadow: '0 2px 20px rgba(212,175,55,0.4)',
+            }}
           >
-            {/* Logo */}
-            <motion.img
-              src="/logo.jpeg"
-              alt="Burhani Collection Logo"
-              className="w-64 h-64 mb-8 object-cover rounded-full shadow-[0_0_40px_rgba(212,175,55,0.4)] border-4 border-[#D4AF37]"
-              initial={{ y: 20, opacity: 0, scale: 0.8 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}
-            />
+            BURHANI COLLECTION
+          </motion.h1>
 
-            {/* Main Title */}
-            <motion.h1
-              className="text-4xl md:text-5xl font-serif tracking-widest uppercase mb-2 text-[#4A4A4A] drop-shadow-sm"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.8 }}
-            >
-              BURHANI COLLECTION
-            </motion.h1>
-
-            {/* Subtext */}
-            <motion.p
-              className="text-sm md:text-base tracking-[0.4em] font-medium uppercase mb-8 text-[#8B7355]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.2, duration: 1 }}
-            >
-              BY HIH
-            </motion.p>
-
-            {/* Decorative Divider */}
-            <motion.div
-              className="w-16 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mb-6"
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 64, opacity: 1 }}
-              transition={{ delay: 1.8, duration: 0.8 }}
-            />
-            
-            {/* Tagline */}
-            <motion.p
-              className="text-lg md:text-xl font-light italic text-[#8B7355]"
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 2, duration: 1 }}
-            >
-              "Where Style Meets Tradition"
-            </motion.p>
-          </motion.div>
-
-          {/* Loading Indicator */}
+          {/* Gold divider line */}
           <motion.div
-            className="absolute bottom-12 flex space-x-3"
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            transition={{ delay: 1.0, duration: 0.7 }}
+            style={{
+              width: '120px',
+              height: '1px',
+              background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)',
+              margin: '0 0 12px 0',
+            }}
+          />
+
+          {/* By HIH Coders */}
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 2.5 }}
+            transition={{ delay: 1.3, duration: 0.8 }}
+            style={{
+              fontFamily: '"Georgia", serif',
+              fontSize: 'clamp(12px, 2vw, 15px)',
+              color: 'rgba(212,175,55,0.75)',
+              letterSpacing: '0.25em',
+              fontStyle: 'italic',
+              margin: 0,
+            }}
+          >
+            BY HIH CODERS
+          </motion.p>
+
+          {/* Animated dots at bottom */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.8 }}
+            style={{
+              position: 'absolute',
+              bottom: '48px',
+              display: 'flex',
+              gap: '10px',
+            }}
           >
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                className="w-2.5 h-2.5 bg-[#D4AF37] rounded-full"
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.3, 1, 0.3],
-                }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 1.5,
-                  delay: i * 0.2,
+                animate={{ scale: [1, 1.6, 1], opacity: [0.3, 1, 0.3] }}
+                transition={{ repeat: Infinity, duration: 1.4, delay: i * 0.2 }}
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: '#D4AF37',
                 }}
               />
             ))}

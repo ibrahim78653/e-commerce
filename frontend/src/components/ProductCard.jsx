@@ -7,14 +7,18 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import useWishlistStore from '../store/wishlistStore';
 import Button from './ui/Button';
 import VariantCarousel from './ui/VariantCarousel';
 import CONFIG from '../config';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
+    const { toggleItem, isInWishlist } = useWishlistStore();
     const navigate = useNavigate();
     const [activeVariant, setActiveVariant] = useState(null);
+
+    const isWishlisted = isInWishlist(product.id);
 
     const price = product.discounted_price || product.original_price;
     const hasDiscount = product.discounted_price && product.discounted_price < product.original_price;
@@ -59,7 +63,7 @@ const ProductCard = ({ product }) => {
         >
             <div className="card card-hover overflow-hidden p-0 h-full flex flex-col">
                 {/* Image Area */}
-                <div className="relative overflow-hidden bg-gray-100 h-64 flex-shrink-0">
+                <div className="relative overflow-hidden bg-gray-100 h-[184px] flex-shrink-0">
                     {hasCarousel ? (
                         <VariantCarousel
                             variants={product.color_variants}
@@ -71,6 +75,7 @@ const ProductCard = ({ product }) => {
                         <img
                             src={fullImageUrl}
                             alt={product.name}
+                            loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             onError={(e) => {
                                 e.target.src = CONFIG.PLACEHOLDER_URL;
@@ -95,10 +100,13 @@ const ProductCard = ({ product }) => {
                     {/* Heart Action */}
                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                            onClick={(e) => { e.stopPropagation(); }}
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                toggleItem(product);
+                            }}
                             className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors"
                         >
-                            <Heart size={18} className="text-gray-700" />
+                            <Heart size={18} className={`${isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-700'}`} />
                         </button>
                     </div>
 
@@ -113,7 +121,7 @@ const ProductCard = ({ product }) => {
                 </div>
 
                 {/* Content Area */}
-                <div className="p-4 flex flex-col flex-1">
+                <div className="p-3 flex flex-col flex-1">
                     {/* Category */}
                     {product.category && (
                         <p className="text-sm text-primary-500 font-bold uppercase tracking-wider mb-1">
@@ -122,14 +130,14 @@ const ProductCard = ({ product }) => {
                     )}
 
                     {/* Name */}
-                    <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1 leading-tight group-hover:text-primary-600 transition-colors">
+                    <h3 className="font-bold text-base text-gray-900 mb-1 line-clamp-1 leading-tight group-hover:text-primary-600 transition-colors">
                         {product.name}
                     </h3>
 
                     <div className="mt-auto">
                         <div className="flex items-center justify-between gap-2 border-t border-gray-50 pt-3">
                             <div className="flex flex-col">
-                                <span className="text-2xl font-black text-gray-900 leading-none">
+                                <span className="text-xl font-black text-gray-900 leading-none">
                                     ₹{price.toLocaleString()}
                                 </span>
                                 {hasDiscount && (
@@ -144,7 +152,7 @@ const ProductCard = ({ product }) => {
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    className="!bg-primary-600 !border-0 hover:!bg-primary-700 !rounded-md !px-4 !py-2 !h-auto shadow-md shadow-primary-500/20 active:scale-95 transition-all"
+                                    className="!bg-primary-600 !border-0 hover:!bg-primary-700 !rounded-md !px-3 !py-1.5 !text-sm !h-auto shadow-md shadow-primary-500/20 active:scale-95 transition-all"
                                     icon={ShoppingCart}
                                     onClick={handleAddToCart}
                                 >

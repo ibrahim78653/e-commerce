@@ -28,6 +28,7 @@ razorpay
 
 # File handling
 pillow
+openpyxl
 
 # HTTP client (for testing)
 httpx

@@ -45,9 +45,9 @@ const Login = () => {
             <div className="w-full max-w-lg relative z-10">
                 <div className="text-center mb-10">
                     <img 
-                        src="/logo.jpeg" 
+                        src="/logo-best.jpeg" 
                         alt="Burhani Collection" 
-                        className="w-24 h-24 object-cover rounded-full mx-auto mb-4 border-2 border-[#D4AF37] shadow-lg"
+                        className="w-28 h-28 object-cover rounded-full mx-auto mb-4"
                     />
                     <h1 className="text-4xl font-display font-bold text-gray-900 mb-2">
                         Welcome Back

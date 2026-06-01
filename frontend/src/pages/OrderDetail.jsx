@@ -7,7 +7,7 @@ import { useParams, Link } from 'react-router-dom';
 import {
     Package, Clock, CheckCircle, Truck, XCircle,
     ChevronLeft, MapPin, CreditCard, Phone, Mail,
-    Download, FileText, User
+    Download, FileText, User, RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ordersAPI } from '../services/api';
@@ -57,6 +57,7 @@ const OrderDetail = () => {
         switch (s) {
             case 'PENDING': return <Clock className="text-yellow-500" size={24} />;
             case 'CONFIRMED': return <CheckCircle className="text-red-500" size={24} />;
+            case 'PROCESSING': return <RefreshCw className="text-blue-500" size={24} />;
             case 'SHIPPED': return <Truck className="text-red-500" size={24} />;
             case 'DELIVERED': return <CheckCircle className="text-green-500" size={24} />;
             case 'CANCELLED': return <XCircle className="text-red-500" size={24} />;
@@ -69,6 +70,7 @@ const OrderDetail = () => {
         switch (s) {
             case 'PENDING': return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
             case 'CONFIRMED': return 'bg-red-100 text-red-800 border border-red-200';
+            case 'PROCESSING': return 'bg-blue-100 text-blue-800 border border-blue-200';
             case 'SHIPPED': return 'bg-red-100 text-red-800 border border-red-200';
             case 'DELIVERED': return 'bg-green-100 text-green-800 border border-green-200';
             case 'CANCELLED': return 'bg-red-100 text-red-800 border border-red-200';
@@ -76,8 +78,14 @@ const OrderDetail = () => {
         }
     };
 
-    const STATUS_STEPS = ['pending', 'confirmed', 'shipped', 'delivered'];
-    const getStepIndex = (status) => STATUS_STEPS.indexOf((status || '').toLowerCase());
+    const STATUS_STEPS = [
+        { id: 'pending', icon: Clock, label: 'Pending' },
+        { id: 'confirmed', icon: CheckCircle, label: 'Confirmed' },
+        { id: 'processing', icon: RefreshCw, label: 'Processing' },
+        { id: 'shipped', icon: Truck, label: 'Shipped' },
+        { id: 'delivered', icon: CheckCircle, label: 'Delivered' }
+    ];
+    const getStepIndex = (status) => STATUS_STEPS.findIndex(s => s.id === (status || '').toLowerCase());
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -180,26 +188,40 @@ const OrderDetail = () => {
 
                 {/* Progress Tracker */}
                 {!isCancelled && (
-                    <div className="mt-6 pt-6 border-t border-gray-100">
-                        <div className="flex items-center justify-between relative">
-                            <div className="absolute left-0 right-0 top-4 h-1 bg-gray-200 z-0 mx-8" />
+                    <div className="mt-8 pt-8 border-t border-gray-100 hidden sm:block">
+                        <div className="flex items-center justify-between relative px-4">
+                            <div className="absolute left-10 right-10 top-5 h-1 bg-gray-200 z-0" />
                             <div
-                                className="absolute left-0 top-4 h-1 bg-gradient-to-r from-red-500 to-red-600 z-0 ml-8 transition-all duration-700"
-                                style={{ width: `${currentStep > 0 ? (currentStep / (STATUS_STEPS.length - 1)) * (100 - (2 * 100 / (STATUS_STEPS.length + 1))) : 0}%` }}
+                                className="absolute left-10 top-5 h-1 bg-gradient-to-r from-red-500 to-red-600 z-0 transition-all duration-1000"
+                                style={{ width: `calc(${currentStep > 0 ? (currentStep / (STATUS_STEPS.length - 1)) * 100 : 0}% - 20px)` }}
                             />
-                            {STATUS_STEPS.map((step, idx) => (
-                                <div key={step} className="flex flex-col items-center z-10 flex-1">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all
-                                        ${idx <= currentStep
-                                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md'
-                                            : 'bg-white border-2 border-gray-300 text-gray-400'}`}>
-                                        {idx < currentStep ? '✓' : idx + 1}
+                            {STATUS_STEPS.map((step, idx) => {
+                                const Icon = step.icon;
+                                const isCompleted = idx <= currentStep;
+                                const isActive = idx === currentStep;
+                                
+                                return (
+                                    <div key={step.id} className="flex flex-col items-center z-10 w-24">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500
+                                            ${isCompleted
+                                                ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/30 scale-110'
+                                                : 'bg-white border-2 border-gray-200 text-gray-300'}`}>
+                                            <Icon size={18} />
+                                        </div>
+                                        <div className="mt-3 text-center">
+                                            <span className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isCompleted ? 'text-gray-900' : 'text-gray-400'}`}>
+                                                {step.label}
+                                            </span>
+                                            {/* Dummy date for visualization since actual step dates aren't in backend yet */}
+                                            {isCompleted && (
+                                                <span className="text-[10px] text-gray-500 block">
+                                                    {idx === 0 ? new Date(order.created_at).toLocaleDateString() : 'Done'}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <span className={`text-xs mt-1.5 font-medium capitalize ${idx <= currentStep ? 'text-red-600' : 'text-gray-400'}`}>
-                                        {step}
-                                    </span>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}

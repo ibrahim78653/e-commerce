@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, X, User, LogOut, Package, UserCircle, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, LogOut, Package, UserCircle, LayoutDashboard, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import { useCart } from '../context/CartContext';
+import GlobalSearch from './GlobalSearch';
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -32,11 +33,14 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-16">
                     <Link to="/" className="flex items-center space-x-3">
                         <img 
-                            src="/logo.jpeg" 
+                            src="/logo-best.jpeg" 
                             alt="Burhani Collection" 
-                            className="w-12 h-12 object-cover rounded-full border border-gray-200 shadow-sm hover:scale-110 transition-transform duration-300"
+                            className="w-14 h-14 object-cover rounded-full hover:scale-110 transition-transform duration-300"
                         />
-                        <span className="text-xl font-display font-bold text-[#4A4A4A] hidden sm:block tracking-wide">
+                        <span 
+                            className="text-xl font-bold hidden sm:block tracking-wide italic text-[#A94A4A]"
+                            style={{ fontFamily: '"Times New Roman", Times, serif' }}
+                        >
                             Burhani Collection
                         </span>
                     </Link>
@@ -55,7 +59,15 @@ const Navbar = () => {
                     </div>
 
                     {/* Right Actions */}
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 sm:space-x-4">
+                        {/* Global Search */}
+                        <GlobalSearch />
+
+                        {/* Wishlist */}
+                        <Link to="/wishlist" className="hidden sm:flex p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700">
+                            <Heart size={24} />
+                        </Link>
+                        
                         {/* Cart */}
                         <Link to="/cart" className="relative">
                             <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -115,6 +127,14 @@ const Navbar = () => {
                                             >
                                                 <Package size={18} className="mr-2" />
                                                 My Orders
+                                            </Link>
+                                            <Link
+                                                to="/wishlist"
+                                                onClick={() => setUserMenuOpen(false)}
+                                                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 md:hidden"
+                                            >
+                                                <Heart size={18} className="mr-2" />
+                                                My Wishlist
                                             </Link>
                                             <hr className="my-2" />
                                             <button

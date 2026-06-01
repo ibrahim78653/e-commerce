@@ -2,13 +2,15 @@
  * Home Page - Product Listing
  * Features: search, filters, pagination, sorting
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { productsAPI, categoriesAPI } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ui/Skeleton';
+import HeroCarousel from '../components/HeroCarousel';
+import Newsletter from '../components/Newsletter';
 
 const Home = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -57,7 +59,7 @@ const Home = () => {
             try {
                 const params = {
                     page: pagination.page,
-                    page_size: 12,
+                    page_size: 20,
                     ...filters,
                 };
 
@@ -99,48 +101,26 @@ const Home = () => {
         setSearchParams(params);
     };
 
+    // Debounce ref for search input — prevents API spam on every keystroke
+    const searchDebounceRef = useRef(null);
+    const handleSearchChange = useCallback((value) => {
+        // Update UI state immediately for snappy feel
+        setFilters(prev => ({ ...prev, search: value }));
+        // Debounce the actual API call + URL update
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => {
+            handleFilterChange('search', value);
+        }, 350);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <div className="bg-gradient-premium py-20 relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-10 left-10 w-64 h-64 bg-primary-300 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent-300 rounded-full blur-3xl animate-pulse delay-700"></div>
-                </div>
-                <div className="container relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-center"
-                    >
-                        <h1 className="text-6xl md:text-7xl font-display font-black mb-6 animate-float">
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-600 via-pink-500 to-purple-600">
-                                Burhani Collection
-                            </span>
-                        </h1>
-                        <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto font-medium">
-                            Experience the pinnacle of premium fashion. Curated collections for those who appreciate quality and style.
-                        </p>
-
-                        {/* Search Bar */}
-                        <div className="max-w-2xl mx-auto">
-                            <div className="relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={24} />
-                                <input
-                                    type="text"
-                                    value={filters.search}
-                                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                                    placeholder="Search for products..."
-                                    className="w-full pl-14 pr-4 py-4 rounded-xl text-gray-900 text-lg focus:outline-none focus:ring-4 focus:ring-white/30"
-                                />
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-            </div>
+            <HeroCarousel />
 
             {/* Filters & Products */}
-            <div className="container py-8">
+            <div id="products-section" className="container py-8 scroll-mt-20">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar Filters */}
                     <aside className="lg:w-64 space-y-6">
@@ -220,10 +200,22 @@ const Home = () => {
 
                     {/* Products Grid */}
                     <main className="flex-1">
+                        {/* Search Bar */}
+                        <div className="mb-6 relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                                type="text"
+                                value={filters.search}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                placeholder="Search for products..."
+                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm transition-all"
+                            />
+                        </div>
+
                         {/* Results Header */}
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-2xl font-bold text-gray-900">
-                                {filters.search ? `Search results for "${filters.search}"` : 'All Products'}
+                                {filters.search ? `Search results for "${filters.search}"` : 'Shop Collection'}
                             </h2>
                             <p className="text-gray-600">
                                 {pagination.total} product{pagination.total !== 1 ? 's' : ''}
@@ -232,8 +224,8 @@ const Home = () => {
 
                         {/* Products Grid */}
                         {loading ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {[...Array(6)].map((_, i) => (
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                {[...Array(8)].map((_, i) => (
                                     <ProductCardSkeleton key={i} />
                                 ))}
                             </div>
@@ -246,7 +238,7 @@ const Home = () => {
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
                                         transition={{ duration: 0.3 }}
-                                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                                        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
                                     >
                                         {products.map((product) => (
                                             <ProductCard key={product.id} product={product} />
@@ -300,6 +292,9 @@ const Home = () => {
                     </main>
                 </div>
             </div>
+            
+            {/* Newsletter Section */}
+            <Newsletter />
         </div>
     );
 };

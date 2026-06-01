@@ -18,6 +18,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: int
     role: str
+    is_active: bool = True
     class Config:
         from_attributes = True
 
@@ -78,6 +79,7 @@ class ProductColorVariantResponse(BaseModel):
 class ProductBase(BaseModel):
     name: str
     slug: str
+    product_id: Optional[str] = None
     description: Optional[str] = None
     original_price: float
     discounted_price: Optional[float] = None
@@ -150,6 +152,82 @@ class OrderResponse(BaseModel):
     items: List[OrderItemResponse]
     class Config:
         from_attributes = True
+
+class OrderListResponse(BaseModel):
+    items: List[OrderResponse]
+    total: int
+    page: int
+    page_size: int
+
+# Reviews
+class ReviewCreate(BaseModel):
+    rating: int
+    comment: Optional[str] = None
+
+class ReviewResponse(BaseModel):
+    id: int
+    user_id: int
+    user_name: str
+    product_id: int
+    rating: int
+    comment: Optional[str] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+# Promos
+class PromoCreate(BaseModel):
+    code: str
+    discount_type: str # 'percentage' or 'fixed'
+    discount_value: float
+    min_order_value: float = 0
+    max_discount: Optional[float] = None
+    is_active: bool = True
+    expires_at: Optional[datetime] = None
+
+class PromoResponse(BaseModel):
+    id: int
+    code: str
+    discount_type: str
+    discount_value: float
+    min_order_value: float
+    max_discount: Optional[float] = None
+    is_active: bool
+    expires_at: Optional[datetime] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class PromoValidate(BaseModel):
+    code: str
+    order_value: float
+
+# Addresses
+class AddressCreate(BaseModel):
+    label: Optional[str] = "Home"        # e.g. Home, Work, Other
+    full_name: str
+    phone: str
+    address_line1: str
+    address_line2: Optional[str] = None
+    city: str
+    state: str
+    pincode: str
+    is_default: bool = False
+
+class AddressResponse(AddressCreate):
+    id: int
+    user_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+# Newsletter
+class NewsletterSubscribe(BaseModel):
+    email: str
+    name: Optional[str] = None
+
+class NewsletterUnsubscribe(BaseModel):
+    email: str
 
 # Razorpay
 class RazorpayOrderCreate(BaseModel):

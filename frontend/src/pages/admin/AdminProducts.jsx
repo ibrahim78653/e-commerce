@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { productsAPI, categoriesAPI } from '../../services/api';
-import { Plus, Trash, Edit, Search, Filter, Eye, X } from 'lucide-react';
+import { Plus, Trash, Edit, Search, Eye, X, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductDetailModal from '../../components/ProductDetailModal';
@@ -14,6 +14,7 @@ const AdminProducts = () => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalProducts, setTotalProducts] = useState(0);
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
@@ -23,7 +24,7 @@ const AdminProducts = () => {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [formData, setFormData] = useState({
-        name: '', description: '', original_price: '', discounted_price: '',
+        product_id: '', name: '', description: '', original_price: '', discounted_price: '',
         stock: '', category_id: '', sizes: '', colors: '', image_urls: [], images: []
     });
 
@@ -36,6 +37,7 @@ const AdminProducts = () => {
             ]);
             setProducts(resProd.data.items);
             setTotalPages(resProd.data.pages);
+            setTotalProducts(resProd.data.total ?? 0);
             setCategories(resCat.data);
         } catch (error) {
             console.error(error);
@@ -47,6 +49,30 @@ const AdminProducts = () => {
     useEffect(() => {
         fetchProducts();
     }, [page, search]);
+
+    /**
+     * Generate a unique Product ID based on the current total product count.
+     * Always fetches a fresh count so it stays accurate even after adds/deletes.
+     */
+    const generateNextProductId = async () => {
+        try {
+            // Fetch all products (admin_view) with page_size=1 just to get the total
+            const res = await productsAPI.getAll({ page: 1, page_size: 1, admin_view: true });
+            const freshTotal = res.data.total ?? totalProducts;
+            return `PROD-${String(freshTotal + 1).padStart(3, '0')}`;
+        } catch {
+            // Fallback to cached total
+            return `PROD-${String(totalProducts + 1).padStart(3, '0')}`;
+        }
+    };
+
+    const openAddModal = async () => {
+        resetForm();
+        setEditingProduct(null);
+        const nextId = await generateNextProductId();
+        setFormData(prev => ({ ...prev, product_id: nextId }));
+        setShowModal(true);
+    };
 
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to deactivate this product?")) return;
@@ -111,6 +137,7 @@ const AdminProducts = () => {
 
             const payload = {
                 ...formData,
+                product_id: formData.product_id?.trim() || null,
                 name: formData.name.trim(),
                 slug: generatedSlug,
                 original_price: parseFloat(formData.original_price) || 0,
@@ -145,7 +172,7 @@ const AdminProducts = () => {
 
     const resetForm = () => {
         setFormData({
-            name: '', description: '', original_price: '', discounted_price: '',
+            product_id: '', name: '', description: '', original_price: '', discounted_price: '',
             stock: '', category_id: '', sizes: '', colors: '', image_urls: []
         });
         setImagePreview(null);
@@ -155,6 +182,7 @@ const AdminProducts = () => {
     const openEditModal = (product) => {
         setEditingProduct(product);
         setFormData({
+            product_id: product.product_id || '',
             name: product.name,
             description: product.description || '',
             original_price: product.original_price,
@@ -192,7 +220,7 @@ const AdminProducts = () => {
                         />
                     </div>
                     <button
-                        onClick={() => { resetForm(); setEditingProduct(null); setShowModal(true); }}
+                        onClick={openAddModal}
                         className="btn btn-primary flex items-center gap-2"
                     >
                         <Plus size={18} /> Add Product
@@ -205,6 +233,7 @@ const AdminProducts = () => {
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Product</th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Product ID</th>
                             <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Category</th>
                             <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Price</th>
                             <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Stock</th>
@@ -235,6 +264,13 @@ const AdminProducts = () => {
                                             <div className="text-sm font-medium text-gray-900">{p.name}</div>
                                         </div>
                                     </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    {p.product_id ? (
+                                        <span className="text-xs font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded border">{p.product_id}</span>
+                                    ) : (
+                                        <span className="text-xs text-gray-400 italic">—</span>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500">{p.category?.name}</td>
                                 <td className="px-6 py-4 text-sm text-gray-500">₹{p.original_price}</td>
@@ -283,6 +319,29 @@ const AdminProducts = () => {
                         >
                             <h3 className="text-lg font-bold mb-4">{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
                             <form onSubmit={handleSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Product ID
+                                        {!editingProduct && (
+                                            <span className="ml-2 text-xs text-emerald-600 font-normal bg-emerald-50 px-1.5 py-0.5 rounded">Auto-assigned (Editable)</span>
+                                        )}
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            readOnly={!!editingProduct}
+                                            className={`input font-mono ${editingProduct ? 'bg-gray-50 text-gray-600 cursor-not-allowed pr-9' : ''}`}
+                                            value={formData.product_id}
+                                            onChange={e => setFormData({ ...formData, product_id: e.target.value })}
+                                        />
+                                        {editingProduct && <Lock size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />}
+                                    </div>
+                                    <p className="mt-1 text-xs text-gray-400">
+                                        {editingProduct 
+                                            ? "Unique identifier — cannot be changed after creation." 
+                                            : "Unique identifier — auto-generated but you can customize it."}
+                                    </p>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Name</label>
                                     <input type="text" required className="input" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />

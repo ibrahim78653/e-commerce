@@ -39,11 +39,11 @@ export default defineConfig({
     port: 5180,
     proxy: {
       '/api': {
-        target: 'http://localhost:8020',
+        target: 'http://localhost:8010',
         changeOrigin: true,
       },
       '/static': {
-        target: 'http://localhost:8020',
+        target: 'http://localhost:8010',
         changeOrigin: true,
       }
     }
@@ -51,11 +51,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['framer-motion', 'lucide-react'],
+          'ui-vendor': ['framer-motion', 'lucide-react', 'react-hot-toast'],
+          'state-vendor': ['zustand', 'axios'],
         }
       }
     }

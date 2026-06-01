@@ -11,6 +11,7 @@ import { authAPI } from '../services/api';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
+import AddressBook from '../components/AddressBook';
 import toast from 'react-hot-toast';
 
 const ProfilePage = () => {
@@ -19,8 +20,16 @@ const ProfilePage = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
     const { register: registerPassword, handleSubmit: handlePasswordSubmit, formState: { errors: passwordErrors }, reset: resetPassword } = useForm();
+    const { register: registerProfile, handleSubmit: handleProfileSubmit, formState: { errors: profileErrors }, reset: resetProfile } = useForm({
+        defaultValues: {
+            full_name: user?.full_name || '',
+            phone: user?.phone || '',
+            email: user?.email || '',
+        }
+    });
 
     const handleChangePassword = async (data) => {
         try {
@@ -36,6 +45,20 @@ const ProfilePage = () => {
         }
     };
 
+    const handleUpdateProfile = async (data) => {
+        try {
+            setIsUpdatingProfile(true);
+            const res = await authAPI.updateProfile(data);
+            updateUser(res.data);
+            toast.success('Profile updated successfully');
+            setIsEditModalOpen(false);
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Failed to update profile');
+        } finally {
+            setIsUpdatingProfile(false);
+        }
+    };
+
     return (
         <div className="container min-h-screen py-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-8">My Profile</h1>
@@ -44,10 +67,26 @@ const ProfilePage = () => {
                 {/* Profile Info */}
                 <div className="lg:col-span-2">
                     <div className="card">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                            <User className="mr-2" size={24} />
-                            Personal Information
-                        </h2>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                                <User className="mr-2" size={24} />
+                                Personal Information
+                            </h2>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    resetProfile({
+                                        full_name: user?.full_name || '',
+                                        phone: user?.phone || '',
+                                        email: user?.email || '',
+                                    });
+                                    setIsEditModalOpen(true);
+                                }}
+                            >
+                                Edit Profile
+                            </Button>
+                        </div>
 
                         <div className="space-y-4">
                             <div>
@@ -158,13 +197,21 @@ const ProfilePage = () => {
                                 <p className="font-medium text-gray-900">Order History</p>
                                 <p className="text-sm text-gray-600">View all your orders</p>
                             </button>
-                            <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-not-allowed opacity-50">
-                                <p className="font-medium text-gray-900">Addresses</p>
-                                <p className="text-sm text-gray-600">Coming soon</p>
+                            <button 
+                                onClick={() => navigate('/wishlist')}
+                                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                <p className="font-medium text-gray-900">Wishlist</p>
+                                <p className="text-sm text-gray-600">View saved products</p>
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Address Book Section */}
+            <div className="mt-8">
+                <AddressBook />
             </div>
 
             {/* Change Password Modal */}
@@ -213,6 +260,63 @@ const ProfilePage = () => {
                         icon={Save}
                     >
                         Change Password
+                    </Button>
+                </form>
+            </Modal>
+            {/* Edit Profile Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit Profile"
+            >
+                <form onSubmit={handleProfileSubmit(handleUpdateProfile)} className="space-y-4">
+                    <Input
+                        label="Full Name"
+                        type="text"
+                        icon={User}
+                        error={profileErrors.full_name?.message}
+                        {...registerProfile('full_name', {
+                            required: 'Full name is required',
+                            minLength: { value: 3, message: 'Name must be at least 3 characters' }
+                        })}
+                    />
+
+                    <Input
+                        label="Email Address"
+                        type="email"
+                        icon={Mail}
+                        error={profileErrors.email?.message}
+                        {...registerProfile('email', {
+                            required: 'Email is required',
+                            pattern: {
+                                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                message: 'Invalid email address'
+                            }
+                        })}
+                    />
+
+                    <Input
+                        label="Phone Number"
+                        type="tel"
+                        icon={Phone}
+                        error={profileErrors.phone?.message}
+                        {...registerProfile('phone', {
+                            required: 'Phone number is required',
+                            pattern: {
+                                value: /^[0-9]{10}$/,
+                                message: 'Invalid phone number (must be 10 digits)'
+                            }
+                        })}
+                    />
+
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="w-full"
+                        isLoading={isUpdatingProfile}
+                        icon={Save}
+                    >
+                        Save Changes
                     </Button>
                 </form>
             </Modal>

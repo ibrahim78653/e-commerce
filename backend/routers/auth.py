@@ -77,9 +77,32 @@ async def login(login_data: schemas.UserLogin, db: Any = Depends(database.get_db
 
 @router.get("/me", response_model=schemas.UserResponse)
 async def get_me(current_user: Any = Depends(auth.get_current_user)):
-    # get_current_user now returns a UserObject
     user_dict = current_user.__dict__
     return sanitize_user(user_dict)
+
+@router.put("/me", response_model=schemas.UserResponse)
+async def update_me(
+    update_data: schemas.UserBase,
+    current_user: Any = Depends(auth.get_current_user),
+    db: Any = Depends(database.get_db)
+):
+    update_dict = {k: v for k, v in update_data.dict(exclude_unset=True).items() if v is not None}
+    
+    if "email" in update_dict:
+        existing = await db.users.find_one({"email": update_dict["email"], "id": {"$ne": current_user.id}})
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already in use by another account")
+            
+    if "phone" in update_dict:
+        existing = await db.users.find_one({"phone": update_dict["phone"], "id": {"$ne": current_user.id}})
+        if existing:
+            raise HTTPException(status_code=400, detail="Phone already in use by another account")
+            
+    if update_dict:
+        await db.users.update_one({"id": current_user.id}, {"$set": update_dict})
+        
+    updated_user = await db.users.find_one({"id": current_user.id})
+    return sanitize_user(updated_user)
 
 @router.post("/refresh", response_model=schemas.TokenResponse)
 async def refresh(token_data: schemas.TokenRefresh, db: Any = Depends(database.get_db)):

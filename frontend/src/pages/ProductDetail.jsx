@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 import { productsAPI } from '../services/api';
 import { useCart } from '../context/CartContext';
 import Button from '../components/ui/Button';
+import ReviewSection from '../components/ReviewSection';
 import Skeleton from '../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 import CONFIG from '../config';
@@ -56,6 +57,7 @@ const SimilarProductCard = ({ product }) => {
                 <img
                     src={imageUrl}
                     alt={product.name}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400"
                     onError={(e) => { e.target.src = CONFIG.PLACEHOLDER_URL; }}
                 />
@@ -164,31 +166,8 @@ const ProductDetail = () => {
     const loadSimilarProducts = async (currentProduct) => {
         setLoadingSimilar(true);
         try {
-            const params = { page_size: 20 };
-            if (currentProduct.category?.id) {
-                params.category_id = currentProduct.category.id;
-            }
-            const res = await productsAPI.getAll(params);
-            // API returns { items: [...], total, page, pages }
-            const all = res.data?.items || [];
-            // Exclude current product; shuffle and take up to 12
-            const filtered = all
-                .filter(p => p.id !== currentProduct.id)
-                .sort(() => Math.random() - 0.5)
-                .slice(0, 12);
-
-            // If category returned fewer than 4, fall back to all products
-            if (filtered.length < 4 && currentProduct.category?.id) {
-                const fallback = await productsAPI.getAll({ page_size: 20 });
-                const allProducts = fallback.data?.items || [];
-                const fallbackFiltered = allProducts
-                    .filter(p => p.id !== currentProduct.id)
-                    .sort(() => Math.random() - 0.5)
-                    .slice(0, 12);
-                setSimilarProducts(fallbackFiltered);
-            } else {
-                setSimilarProducts(filtered);
-            }
+            const res = await productsAPI.getRelated(currentProduct.id, 12);
+            setSimilarProducts(res.data?.items || []);
         } catch (err) {
             console.error('Failed to load similar products:', err);
         } finally {
@@ -318,6 +297,7 @@ const ProductDetail = () => {
                                                 : `${CONFIG.IMAGE_BASE_URL}${image.image_url}`
                                         }
                                         alt={`${product.name} thumb ${index + 1}`}
+                                        loading="lazy"
                                         className="w-full h-full object-cover"
                                         onError={(e) => { e.target.src = CONFIG.PLACEHOLDER_URL; }}
                                     />
@@ -557,6 +537,9 @@ const ProductDetail = () => {
                     </div>
                 </div>
             )}
+
+            {/* Reviews Section */}
+            {product && <ReviewSection productId={product.id} />}
         </div>
     );
 };

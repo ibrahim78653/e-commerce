@@ -67,6 +67,9 @@ api.interceptors.response.use(
             // If we reach here, either no refresh token or refresh failed
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('auth-storage'); // CRITICAL: Clear Zustand state so it doesn't redirect back
+
             if (window.location.pathname.startsWith('/admin')) {
                 window.location.href = '/admin/login';
             }
@@ -98,6 +101,7 @@ export const authAPI = {
     login: (data) => api.post('/auth/login', data),
     logout: (refreshToken) => api.post('/auth/logout', { refresh_token: refreshToken }),
     getProfile: () => api.get('/auth/me'),
+    updateProfile: (data) => api.put('/auth/me', data),
     changePassword: (data) => api.put('/auth/me/password', data),
 };
 
@@ -105,6 +109,7 @@ export const authAPI = {
 export const productsAPI = {
     getAll: (params) => api.get('/products', { params }),
     getById: (id) => api.get(`/products/${id}`),
+    getRelated: (id, limit = 8) => api.get(`/products/${id}/related`, { params: { limit } }),
     create: (data) => api.post('/products', data),
     update: (id, data) => api.put(`/products/${id}`, data),
     delete: (id) => api.delete(`/products/${id}`),
@@ -137,12 +142,146 @@ export const ordersAPI = {
     createWhatsAppOrder: (data) => api.post('/orders/whatsapp', data),
     getAllAdmin: (params) => api.get('/admin/orders', { params }),
     updateStatus: (id, data) => api.put(`/admin/orders/${id}/status`, data),
+    exportOrders: ({ filterBy = 'all', sortBy = 'newest', startDate = null, endDate = null, format = 'xlsx' } = {}) => {
+        const token = localStorage.getItem('access_token');
+        const params = new URLSearchParams({
+            filter_by: filterBy,
+            sort_by: sortBy,
+            export_format: format,
+            token: token || '',
+        });
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        // Return direct download URL using absolute API_BASE_URL to prevent Vite proxy from stripping headers
+        return Promise.resolve({ downloadUrl: `${API_BASE_URL}/admin/orders/export?${params.toString()}` });
+    },
 };
 
 // ==================== ADMIN USERS APIs ====================
 export const usersAPI = {
     getAll: (params) => api.get('/admin/users', { params }),
     toggleBlock: (id, blockStatus) => api.put(`/admin/users/${id}/block`, null, { params: { block_status: blockStatus } }),
+    getStats: () => api.get('/admin/stats'),
+};
+
+// ==================== WISHLIST APIs ====================
+export const wishlistAPI = {
+    get: () => api.get('/wishlist'),
+    add: (productId) => api.post(`/wishlist/${productId}`),
+    remove: (productId) => api.delete(`/wishlist/${productId}`),
+};
+
+// ==================== REVIEWS APIs ====================
+export const reviewsAPI = {
+    getByProduct: (productId) => api.get(`/products/${productId}/reviews`),
+    create: (productId, data) => api.post(`/products/${productId}/reviews`, data),
+};
+
+// ==================== PROMOS APIs ====================
+export const promosAPI = {
+    validate: (data) => api.post('/promos/validate', data),
+    // Admin
+    getAll: () => api.get('/admin/promos'),
+    create: (data) => api.post('/admin/promos', data),
+    update: (id, data) => api.put(`/admin/promos/${id}`, data),
+    delete: (id) => api.delete(`/admin/promos/${id}`),
+};
+
+// ==================== ADDRESSES APIs ====================
+export const addressesAPI = {
+    getAll: () => api.get('/users/addresses'),
+    create: (data) => api.post('/users/addresses', data),
+    update: (id, data) => api.put(`/users/addresses/${id}`, data),
+    delete: (id) => api.delete(`/users/addresses/${id}`),
+    setDefault: (id) => api.patch(`/users/addresses/${id}/set-default`),
+};
+
+// ==================== NEWSLETTER APIs ====================
+export const newsletterAPI = {
+    subscribe: (data) => api.post('/newsletter/subscribe', data),
+    unsubscribe: (data) => api.post('/newsletter/unsubscribe', data),
+    // Admin
+    getSubscribers: () => api.get('/admin/newsletter'),
+};
+
+// ==================== EXCEL IMPORT/EXPORT APIs ====================
+export const excelAPI = {
+    /**
+     * Upload an .xlsx file to import products.
+     * @param {File} file - The xlsx file
+     * @param {boolean} partial - Allow partial success (default false = full rollback on error)
+     */
+    importExcel: (file, partial = false) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        return api.post(`/admin/products/import-excel?partial=${partial}`, fd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 120000, // large files may take longer
+        });
+    },
+
+    /**
+     * Export all products to .xlsx.
+     * Returns a Blob response for download.
+     */
+    exportExcel: (isActive = null) => {
+        const params = {};
+        if (isActive !== null) params.is_active = isActive;
+        return api.get('/admin/products/export-excel', {
+            params,
+            responseType: 'blob',
+        });
+    },
+
+    /** Download a pre-filled template .xlsx */
+    downloadTemplate: () =>
+        api.get('/admin/products/excel-template', { responseType: 'blob' }),
+
+    /** Get recent import audit logs */
+    getLogs: (limit = 20) =>
+        api.get('/admin/products/import-logs', { params: { limit } }),
+
+    /** List excel-imported products with optional filter */
+    listProducts: (params) =>
+        api.get('/admin/products/excel-products', { params }),
+
+    /** Toggle is_active for a single excel product */
+    toggleProduct: (productId) =>
+        api.patch(`/admin/products/excel-products/${productId}/toggle`),
+};
+
+// ==================== BULK IMAGE IMPORT APIs ====================
+export const bulkImageAPI = {
+    /**
+     * Upload a ZIP file containing product images.
+     * @param {File} file - The ZIP file
+     */
+    startImport: (file) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        return api.post('/admin/bulk-image-import', fd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 120000, // large ZIP files might take a while to upload
+        });
+    },
+
+    /**
+     * Get the status of an ongoing or completed import job.
+     * @param {string} jobId - The job ID
+     */
+    getJobStatus: (jobId) => api.get(`/admin/bulk-image-import/status/${jobId}`),
+
+    /**
+     * Get recent import jobs.
+     */
+    getJobs: () => api.get('/admin/bulk-image-import/jobs'),
+
+    /**
+     * Download the error report for a job.
+     * Returns a Blob.
+     */
+    downloadReport: (jobId) =>
+        api.get(`/admin/bulk-image-import/report/${jobId}`, { responseType: 'blob' }),
 };
 
 export default api;
