@@ -57,13 +57,19 @@ const ProductCard = ({ product }) => {
     return (
         <motion.div
             whileHover={{ y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="group cursor-pointer"
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="group cursor-pointer h-full"
             onClick={handleCardClick}
         >
-            <div className="card card-hover overflow-hidden p-0 h-full flex flex-col">
+            <div className="relative bg-[#FDFBF7] rounded-2xl overflow-hidden border border-[#D4AF37]/15 hover:border-[#D4AF37]/50 shadow-sm hover:shadow-xl hover:shadow-[#1a0a00]/5 transition-all duration-500 h-full flex flex-col">
+                
+                {/* Gold Shimmer Sweep Overlay on Hover */}
+                <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-10">
+                    <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-tr from-transparent via-[#D4AF37]/10 to-transparent rotate-45 -translate-x-[110%] group-hover:translate-x-[110%] transition-transform duration-1000 ease-out" />
+                </div>
+
                 {/* Image Area */}
-                <div className="relative overflow-hidden bg-gray-100 h-[184px] flex-shrink-0">
+                <div className="relative overflow-hidden bg-[#1a0a00]/5 h-[230px] flex-shrink-0">
                     {hasCarousel ? (
                         <VariantCarousel
                             variants={product.color_variants}
@@ -76,90 +82,87 @@ const ProductCard = ({ product }) => {
                             src={fullImageUrl}
                             alt={product.name}
                             loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             onError={(e) => {
                                 e.target.src = CONFIG.PLACEHOLDER_URL;
                             }}
                         />
                     )}
 
-                    {/* Badges */}
-                    <div className="absolute top-3 left-3 flex flex-col gap-2">
+                    {/* Luxury Badges */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
                         {hasDiscount && (
-                            <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                            <span className="bg-[#A94A4A] text-[#FDFBF7] px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
                                 -{Math.round(((product.original_price - product.discounted_price) / product.original_price) * 100)}%
                             </span>
                         )}
                         {product.is_featured && (
-                            <span className="bg-accent-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                            <span className="bg-[#D4AF37] text-[#1a0a00] px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
                                 Featured
                             </span>
                         )}
                     </div>
 
-                    {/* Heart Action */}
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Heart/Wishlist Button */}
+                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
                         <button
                             onClick={(e) => { 
                                 e.stopPropagation(); 
                                 toggleItem(product);
                             }}
-                            className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors"
+                            className="bg-[#FDFBF7]/70 backdrop-blur-md p-2 rounded-full border border-white/20 hover:bg-[#FDFBF7] text-gray-700 transition-all duration-200 shadow-sm"
                         >
-                            <Heart size={18} className={`${isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-700'}`} />
+                            <Heart size={16} className={`${isWishlisted ? 'text-[#A94A4A] fill-[#A94A4A]' : 'text-gray-700 hover:text-[#A94A4A]'}`} />
                         </button>
                     </div>
 
                     {/* Out of Stock Overlay */}
                     {product.stock === 0 && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                            <span className="bg-white/90 backdrop-blur px-4 py-2 rounded-lg font-bold text-gray-900 border border-white/50 shadow-xl">
-                                OUT OF STOCK
+                        <div className="absolute inset-0 bg-[#1a0a00]/40 backdrop-blur-[2px] flex items-center justify-center z-10">
+                            <span className="bg-[#FDFBF7]/90 text-gray-900 border border-[#D4AF37] px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest shadow-xl">
+                                Out of Stock
                             </span>
                         </div>
                     )}
                 </div>
 
                 {/* Content Area */}
-                <div className="p-3 flex flex-col flex-1">
+                <div className="p-4 flex flex-col flex-grow">
                     {/* Category */}
                     {product.category && (
-                        <p className="text-sm text-primary-500 font-bold uppercase tracking-wider mb-1">
+                        <p className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-[0.2em] mb-1.5">
                             {product.category.name}
                         </p>
                     )}
 
-                    {/* Name */}
-                    <h3 className="font-bold text-base text-gray-900 mb-1 line-clamp-1 leading-tight group-hover:text-primary-600 transition-colors">
+                    {/* Product Name */}
+                    <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 leading-snug group-hover:text-[#A94A4A] transition-colors duration-300">
                         {product.name}
                     </h3>
 
-                    <div className="mt-auto">
-                        <div className="flex items-center justify-between gap-2 border-t border-gray-50 pt-3">
-                            <div className="flex flex-col">
-                                <span className="text-xl font-black text-gray-900 leading-none">
-                                    ₹{price.toLocaleString()}
+                    {/* Price and Add Button Container */}
+                    <div className="mt-auto pt-3 border-t border-gray-100/70 flex items-center justify-between gap-2">
+                        <div className="flex flex-col">
+                            <span className="text-base font-bold text-gray-900">
+                                ₹{price.toLocaleString()}
+                            </span>
+                            {hasDiscount && (
+                                <span className="text-xs text-gray-400 line-through mt-0.5">
+                                    ₹{product.original_price.toLocaleString()}
                                 </span>
-                                {hasDiscount && (
-                                    <span className="text-sm text-gray-400 line-through mt-0.5">
-                                        ₹{product.original_price.toLocaleString()}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Add to Cart Button */}
-                            {product.stock !== 0 && (
-                                <Button
-                                    variant="primary"
-                                    size="sm"
-                                    className="!bg-primary-600 !border-0 hover:!bg-primary-700 !rounded-md !px-3 !py-1.5 !text-sm !h-auto shadow-md shadow-primary-500/20 active:scale-95 transition-all"
-                                    icon={ShoppingCart}
-                                    onClick={handleAddToCart}
-                                >
-                                    Add
-                                </Button>
                             )}
                         </div>
+
+                        {/* Premium Add Button */}
+                        {product.stock !== 0 && (
+                            <button
+                                onClick={handleAddToCart}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#A94A4A] text-[#A94A4A] hover:bg-[#A94A4A] hover:text-[#FDFBF7] text-xs font-bold uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-sm shadow-[#A94A4A]/5 hover:shadow-md"
+                            >
+                                <ShoppingCart size={13} className="stroke-[2.5]" />
+                                <span>Add</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

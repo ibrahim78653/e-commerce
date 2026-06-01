@@ -9,6 +9,7 @@ import { CartProvider } from './context/CartContext';
 
 // Components
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import PageTransition from './components/PageTransition';
 
@@ -49,7 +50,7 @@ function App() {
                         <>
                             <Navbar />
                             <PageTransition>
-                                    <Suspense fallback={<div className="min-h-[50vh] flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div></div>}>
+                                    <Suspense fallback={<div className="min-h-[50vh] flex flex-col items-center justify-center gap-4"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D4AF37]"></div><p className="text-sm font-medium text-gray-500 tracking-widest uppercase">Loading Burhani Collection</p></div>}>
                                         <Routes>
                                             <Route path="/" element={<Home />} />
                                             <Route path="/product/:id" element={<ProductDetail />} />
@@ -95,6 +96,7 @@ function App() {
                                         </Routes>
                                     </Suspense>
                             </PageTransition>
+                            <Footer />
                         </>
                     )}
 

@@ -1,16 +1,15 @@
 /**
- * Orders Page - Order History
- * Display user's order history with status, details, and invoice download
+ * Orders Page - Luxury Redesign
+ * Burhani Collection — Premium Boutique
  */
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Package, Clock, CheckCircle, Truck, XCircle,
-    ChevronRight, Download, FileText
+    ChevronRight, Download, FileText, ShoppingBag, Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ordersAPI } from '../services/api';
-import Skeleton from '../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 import { generateInvoice } from '../utils/generateInvoice';
 
@@ -41,7 +40,6 @@ const OrdersPage = () => {
         e.stopPropagation();
         setDownloadingId(order.id);
         try {
-            // Fetch full order (with items) if needed
             let fullOrder = order;
             if (!order.items || order.items.length === 0) {
                 const res = await ordersAPI.getById(order.id);
@@ -57,171 +55,229 @@ const OrdersPage = () => {
         }
     };
 
-    const getStatusIcon = (status) => {
+    const getStatusConfig = (status) => {
         const s = status?.toUpperCase();
         switch (s) {
-            case 'PENDING': return <Clock className="text-yellow-500" size={16} />;
-            case 'CONFIRMED': return <CheckCircle className="text-red-500" size={16} />;
-            case 'SHIPPED': return <Truck className="text-red-500" size={16} />;
-            case 'DELIVERED': return <CheckCircle className="text-green-500" size={16} />;
-            case 'CANCELLED': return <XCircle className="text-red-500" size={16} />;
-            default: return <Package className="text-gray-500" size={16} />;
+            case 'PENDING':   return { icon: Clock,         color: '#D4AF37', bg: '#D4AF37', label: 'Pending' };
+            case 'CONFIRMED': return { icon: CheckCircle,   color: '#A94A4A', bg: '#A94A4A', label: 'Confirmed' };
+            case 'SHIPPED':   return { icon: Truck,          color: '#7B68EE', bg: '#7B68EE', label: 'Shipped' };
+            case 'DELIVERED': return { icon: CheckCircle,   color: '#22c55e', bg: '#22c55e', label: 'Delivered' };
+            case 'CANCELLED': return { icon: XCircle,       color: '#ef4444', bg: '#ef4444', label: 'Cancelled' };
+            default:          return { icon: Package,       color: '#9ca3af', bg: '#9ca3af', label: status };
         }
     };
 
-    const getStatusColor = (status) => {
-        const s = status?.toUpperCase();
-        switch (s) {
-            case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-            case 'CONFIRMED': return 'bg-red-100 text-red-800';
-            case 'SHIPPED': return 'bg-red-100 text-red-800';
-            case 'DELIVERED': return 'bg-green-100 text-green-800';
-            case 'CANCELLED': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-IN', {
+    const formatDate = (dateString) =>
+        new Date(dateString).toLocaleDateString('en-IN', {
             year: 'numeric', month: 'long', day: 'numeric',
         });
-    };
 
+    // ── Loading State ─────────────────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="container py-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
-                <div className="space-y-4">
+            <div className="min-h-screen bg-[#FDFBF7]">
+                <div className="bg-[#1a0a00] border-b border-[#D4AF37]/20">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                        <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.3em] mb-2">Burhani Collection</p>
+                        <div className="h-9 w-40 bg-white/10 rounded-lg animate-pulse" />
+                    </div>
+                </div>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-4">
                     {[...Array(3)].map((_, i) => (
-                        <Skeleton key={i} variant="card" className="h-48" />
+                        <div key={i} className="bg-white rounded-2xl border border-[#D4AF37]/10 h-44 animate-pulse" />
                     ))}
                 </div>
             </div>
         );
     }
 
+    // ── Empty State ───────────────────────────────────────────────────────────
     if (orders.length === 0) {
         return (
-            <div className="container min-h-screen py-16">
-                <div className="max-w-md mx-auto text-center">
-                    <Package size={80} className="mx-auto text-gray-300 mb-6" />
-                    <h2 className="text-3xl font-bold text-gray-900 mb-4">No orders yet</h2>
-                    <p className="text-gray-600 mb-8">Start shopping to see your orders here</p>
-                    <Link to="/">
-                        <button className="btn btn-primary">Start Shopping</button>
-                    </Link>
+            <div className="min-h-screen bg-[#FDFBF7]">
+                <div className="bg-[#1a0a00] border-b border-[#D4AF37]/20">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                        <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.3em] mb-2">Burhani Collection</p>
+                        <h1 className="text-3xl md:text-4xl font-bold text-[#FDFBF7]"
+                            style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                            My Orders
+                        </h1>
+                    </div>
+                </div>
+                <div className="flex items-center justify-center py-28 px-4">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                        className="text-center max-w-md"
+                    >
+                        <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#A94A4A]/10 flex items-center justify-center border border-[#D4AF37]/30 mx-auto mb-8">
+                            <Package size={46} className="text-[#D4AF37]/60" />
+                        </div>
+                        <h2 className="text-3xl font-bold text-[#1a0a00] mb-3"
+                            style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                            No Orders Yet
+                        </h2>
+                        <p className="text-gray-500 text-sm leading-relaxed mb-8">
+                            You haven't placed any orders. Explore our premium boutique collection and make your first purchase.
+                        </p>
+                        <Link
+                            to="/"
+                            className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#1a0a00] text-[#D4AF37] font-bold text-sm uppercase tracking-[0.15em] rounded-full hover:bg-[#2d1200] transition-all duration-300 shadow-lg shadow-[#1a0a00]/20"
+                        >
+                            <Sparkles size={16} />
+                            Start Shopping
+                        </Link>
+                    </motion.div>
                 </div>
             </div>
         );
     }
 
+    // ── Orders List ───────────────────────────────────────────────────────────
     return (
-        <div className="container min-h-screen py-8">
-            <div className="flex items-center justify-between mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
-                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">
-                    {orders.length} order{orders.length !== 1 ? 's' : ''}
-                </span>
+        <div className="min-h-screen bg-[#FDFBF7]">
+            {/* Page Header */}
+            <div className="bg-[#1a0a00] border-b border-[#D4AF37]/20">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="flex items-end gap-4"
+                    >
+                        <div>
+                            <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.3em] mb-2">Burhani Collection</p>
+                            <h1 className="text-3xl md:text-4xl font-bold text-[#FDFBF7]"
+                                style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                                My Orders
+                            </h1>
+                        </div>
+                        <span className="mb-1 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-bold tracking-wider">
+                            {orders.length} order{orders.length !== 1 ? 's' : ''}
+                        </span>
+                    </motion.div>
+                </div>
             </div>
 
-            <div className="space-y-5">
-                {orders.map((order, orderIdx) => (
-                    <motion.div
-                        key={order.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: orderIdx * 0.05 }}
-                        className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-                    >
-                        {/* Card Header */}
-                        <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white flex flex-wrap items-center justify-between gap-3 border-b border-gray-100">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
-                                    <FileText size={18} className="text-red-500" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-900 text-lg leading-tight">Order #{order.id}</h3>
-                                    <p className="text-xs text-gray-500">Placed on {formatDate(order.created_at)}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-                                    {getStatusIcon(order.status)}
-                                    <span className="uppercase">{order.status}</span>
-                                </span>
-                                <span className="text-xl font-bold text-gray-900">
-                                    ₹{(order.total_amount || 0).toFixed(2)}
-                                </span>
-                            </div>
-                        </div>
+            {/* Order Cards */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-5">
+                {orders.map((order, orderIdx) => {
+                    const statusConfig = getStatusConfig(order.status);
+                    const StatusIcon = statusConfig.icon;
 
-                        {/* Order Items */}
-                        <div className="px-6 py-4 space-y-3 border-b border-gray-50">
-                            {order.items?.slice(0, 3).map((item, index) => (
-                                <div key={index} className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-red-50 to-red-100 rounded-lg flex-shrink-0 flex items-center justify-center">
-                                        <Package size={16} className="text-red-300" />
+                    return (
+                        <motion.div
+                            key={order.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: orderIdx * 0.06, duration: 0.4 }}
+                            className="bg-white rounded-2xl border border-[#D4AF37]/15 hover:border-[#D4AF37]/35 shadow-sm hover:shadow-lg hover:shadow-[#1a0a00]/5 transition-all duration-300 overflow-hidden group"
+                        >
+                            {/* Card Header */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 bg-gradient-to-r from-[#FDFBF7] to-white border-b border-gray-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                                        style={{ background: `${statusConfig.bg}15` }}>
+                                        <FileText size={17} style={{ color: statusConfig.color }} />
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-gray-900 text-sm truncate">{item.product_name}</p>
-                                        <p className="text-xs text-gray-500">
-                                            Qty: {item.quantity}
-                                            {item.selected_size && ` • Size: ${item.selected_size}`}
-                                            {item.selected_color && ` • ${item.selected_color}`}
+                                    <div>
+                                        <h3 className="font-bold text-gray-900 text-base leading-tight"
+                                            style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                                            Order #{order.id}
+                                        </h3>
+                                        <p className="text-xs text-gray-400 mt-0.5">Placed on {formatDate(order.created_at)}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    {/* Status Badge */}
+                                    <span
+                                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border"
+                                        style={{
+                                            color: statusConfig.color,
+                                            borderColor: `${statusConfig.color}40`,
+                                            background: `${statusConfig.bg}10`,
+                                        }}
+                                    >
+                                        <StatusIcon size={11} />
+                                        {statusConfig.label}
+                                    </span>
+                                    {/* Order Total */}
+                                    <span className="text-lg font-black text-gray-900">
+                                        ₹{(order.total_amount || 0).toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Order Items Preview */}
+                            <div className="px-5 py-4 space-y-2.5 border-b border-gray-50">
+                                {order.items?.slice(0, 3).map((item, index) => (
+                                    <div key={index} className="flex items-center gap-3">
+                                        <div className="w-11 h-11 rounded-lg flex-shrink-0 flex items-center justify-center bg-[#FDFBF7] border border-[#D4AF37]/15">
+                                            <Package size={15} className="text-[#D4AF37]/60" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-gray-900 text-xs truncate">{item.product_name}</p>
+                                            <p className="text-[10px] text-gray-400 mt-0.5">
+                                                Qty: {item.quantity}
+                                                {item.selected_size && ` · Size: ${item.selected_size}`}
+                                                {item.selected_color && ` · ${item.selected_color}`}
+                                            </p>
+                                        </div>
+                                        <p className="text-xs font-bold text-gray-700 flex-shrink-0">
+                                            ₹{(item.price * item.quantity).toLocaleString()}
                                         </p>
                                     </div>
-                                    <p className="font-semibold text-gray-900 text-sm flex-shrink-0">
-                                        ₹{(item.price * item.quantity).toFixed(2)}
+                                ))}
+                                {order.items?.length > 3 && (
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] pl-14">
+                                        +{order.items.length - 3} more item{order.items.length - 3 !== 1 ? 's' : ''}
                                     </p>
-                                </div>
-                            ))}
-                            {order.items?.length > 3 && (
-                                <p className="text-xs text-gray-500 pl-15 font-medium">
-                                    + {order.items.length - 3} more item{order.items.length - 3 !== 1 ? 's' : ''}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Card Footer */}
-                        <div className="px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-                            <div className="text-sm text-gray-600">
-                                Payment: <span className="font-medium text-gray-900">
-                                    {order.payment_method === 'razorpay' ? 'Online Payment' : 'Cash on Delivery'}
-                                </span>
-                                <span className="mx-2 text-gray-300">|</span>
-                                <span className="text-gray-500">{order.items?.length || 0} item(s)</span>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                {/* Invoice Download */}
-                                {!(order.payment_method === 'whatsapp' && order.status?.toLowerCase() === 'pending') && (
-                                    <button
-                                        id={`invoice-btn-${order.id}`}
-                                        onClick={(e) => handleDownloadInvoice(e, order)}
-                                        disabled={downloadingId === order.id}
-                                        className="flex items-center gap-1.5 text-xs font-semibold text-red-600 border border-red-200 hover:border-red-400 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition-all disabled:opacity-50"
-                                    >
-                                        {downloadingId === order.id ? (
-                                            <span className="animate-spin inline-block w-3 h-3 border-2 border-red-500 border-t-transparent rounded-full" />
-                                        ) : (
-                                            <Download size={13} />
-                                        )}
-                                        Invoice
-                                    </button>
                                 )}
-
-                                {/* View Details */}
-                                <Link
-                                    to={`/orders/${order.id}`}
-                                    className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-semibold"
-                                >
-                                    View Details
-                                    <ChevronRight size={16} />
-                                </Link>
                             </div>
-                        </div>
-                    </motion.div>
-                ))}
+
+                            {/* Card Footer */}
+                            <div className="px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+                                <div className="text-xs text-gray-400">
+                                    <span className="font-semibold text-gray-600">
+                                        {order.payment_method === 'razorpay' ? 'Online Payment' : 'Cash on Delivery'}
+                                    </span>
+                                    <span className="mx-2 text-gray-200">|</span>
+                                    <span>{order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}</span>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    {/* Invoice Download */}
+                                    {!(order.payment_method === 'whatsapp' && order.status?.toLowerCase() === 'pending') && (
+                                        <button
+                                            id={`invoice-btn-${order.id}`}
+                                            onClick={(e) => handleDownloadInvoice(e, order)}
+                                            disabled={downloadingId === order.id}
+                                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A94A4A] border border-[#A94A4A]/25 hover:border-[#A94A4A]/60 hover:bg-[#A94A4A]/5 px-3 py-1.5 rounded-lg transition-all duration-200 disabled:opacity-40"
+                                        >
+                                            {downloadingId === order.id ? (
+                                                <span className="w-3 h-3 border-2 border-[#A94A4A] border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <Download size={11} />
+                                            )}
+                                            Invoice
+                                        </button>
+                                    )}
+
+                                    {/* View Details */}
+                                    <Link
+                                        to={`/orders/${order.id}`}
+                                        className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#1a0a00] hover:text-[#A94A4A] transition-colors duration-200 group/link"
+                                    >
+                                        View Details
+                                        <ChevronRight size={14} className="group-hover/link:translate-x-0.5 transition-transform duration-200" />
+                                    </Link>
+                                </div>
+                            </div>
+                        </motion.div>
+                    );
+                })}
             </div>
         </div>
     );

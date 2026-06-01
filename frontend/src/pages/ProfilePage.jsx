@@ -1,10 +1,11 @@
 /**
- * User Profile Page
- * Display and edit user profile information
+ * User Profile Page - Luxury Redesign
+ * Burhani Collection — Premium Boutique
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, Lock, Save } from 'lucide-react';
+import { User, Mail, Phone, Lock, Save, ShieldCheck, Package, Heart, ChevronRight, Crown } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import useAuthStore from '../store/authStore';
 import { authAPI } from '../services/api';
@@ -59,168 +60,237 @@ const ProfilePage = () => {
         }
     };
 
+    // Helper to get user initials
+    const getInitials = (name) => {
+        if (!name) return 'BC';
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    };
+
+    const memberSince = user?.created_at
+        ? new Date(user.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })
+        : 'N/A';
+
     return (
-        <div className="container min-h-screen py-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8">My Profile</h1>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Profile Info */}
-                <div className="lg:col-span-2">
-                    <div className="card">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                                <User className="mr-2" size={24} />
-                                Personal Information
-                            </h2>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    resetProfile({
-                                        full_name: user?.full_name || '',
-                                        phone: user?.phone || '',
-                                        email: user?.email || '',
-                                    });
-                                    setIsEditModalOpen(true);
-                                }}
-                            >
-                                Edit Profile
-                            </Button>
+        <div className="min-h-screen bg-[#FDFBF7]">
+            {/* ── Page Header ───────────────────────────────────────────────── */}
+            <div className="bg-[#1a0a00] border-b border-[#D4AF37]/20">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="flex items-center gap-5"
+                    >
+                        {/* Avatar */}
+                        <div className="relative">
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#9E7E47] flex items-center justify-center text-[#1a0a00] text-xl font-black shadow-lg border-2 border-[#D4AF37]/40">
+                                {getInitials(user?.full_name)}
+                            </div>
+                            {user?.is_active && (
+                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-400 rounded-full border-2 border-[#1a0a00]" />
+                            )}
                         </div>
+                        <div>
+                            <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.3em] mb-1">My Account</p>
+                            <h1
+                                className="text-2xl md:text-3xl font-bold text-[#FDFBF7]"
+                                style={{ fontFamily: '"Times New Roman", Times, serif' }}
+                            >
+                                {user?.full_name || 'Valued Customer'}
+                            </h1>
+                            <p className="text-gray-400 text-xs mt-0.5">Member since {memberSince}</p>
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Full Name
-                                </label>
-                                <p className="text-lg text-gray-900">{user?.full_name || 'Not provided'}</p>
+            {/* ── Main Content ──────────────────────────────────────────────── */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+                    {/* ── Left: Profile + Security ──────────────────────────── */}
+                    <div className="lg:col-span-2 space-y-6">
+
+                        {/* Personal Information */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                            className="bg-white rounded-2xl border border-[#D4AF37]/15 shadow-sm overflow-hidden"
+                        >
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                                <h2 className="font-bold text-gray-900 flex items-center gap-2 text-base"
+                                    style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                                    <User size={18} className="text-[#D4AF37]" />
+                                    Personal Information
+                                </h2>
+                                <button
+                                    onClick={() => {
+                                        resetProfile({
+                                            full_name: user?.full_name || '',
+                                            phone: user?.phone || '',
+                                            email: user?.email || '',
+                                        });
+                                        setIsEditModalOpen(true);
+                                    }}
+                                    className="text-xs font-bold uppercase tracking-wider text-[#A94A4A] border border-[#A94A4A]/30 hover:border-[#A94A4A] hover:bg-[#A94A4A]/5 px-3 py-1.5 rounded-lg transition-all duration-200"
+                                >
+                                    Edit Profile
+                                </button>
                             </div>
 
-                            {user?.email && (
+                            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                {/* Full Name */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                                        <Mail className="mr-1" size={16} />
-                                        Email
-                                    </label>
-                                    <p className="text-lg text-gray-900">{user.email}</p>
-                                    {user.email_verified ? (
-                                        <span className="text-sm text-green-600">✓ Verified</span>
-                                    ) : (
-                                        <span className="text-sm text-gray-500">Not verified</span>
-                                    )}
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-1.5">Full Name</p>
+                                    <p className="text-gray-900 font-semibold text-sm">{user?.full_name || '—'}</p>
                                 </div>
-                            )}
 
-                            {user?.phone && (
+                                {/* Email */}
+                                {user?.email && (
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-1.5 flex items-center gap-1">
+                                            <Mail size={10} /> Email
+                                        </p>
+                                        <p className="text-gray-900 font-semibold text-sm">{user.email}</p>
+                                        <span className={`text-[10px] font-bold uppercase tracking-wider mt-1 inline-flex items-center gap-1 ${user.email_verified ? 'text-green-600' : 'text-gray-400'}`}>
+                                            {user.email_verified ? '✓ Verified' : 'Not verified'}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Phone */}
+                                {user?.phone && (
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-1.5 flex items-center gap-1">
+                                            <Phone size={10} /> Phone
+                                        </p>
+                                        <p className="text-gray-900 font-semibold text-sm">{user.phone}</p>
+                                        <span className={`text-[10px] font-bold uppercase tracking-wider mt-1 inline-flex items-center gap-1 ${user.phone_verified ? 'text-green-600' : 'text-gray-400'}`}>
+                                            {user.phone_verified ? '✓ Verified' : 'Not verified'}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Account Type */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                                        <Phone className="mr-1" size={16} />
-                                        Phone
-                                    </label>
-                                    <p className="text-lg text-gray-900">{user.phone}</p>
-                                    {user.phone_verified ? (
-                                        <span className="text-sm text-green-600">✓ Verified</span>
-                                    ) : (
-                                        <span className="text-sm text-gray-500">Not verified</span>
-                                    )}
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-1.5">Account Type</p>
+                                    <p className="text-gray-900 font-semibold text-sm capitalize">{user?.role || 'Customer'}</p>
                                 </div>
-                            )}
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Account Type
-                                </label>
-                                <p className="text-lg text-gray-900 capitalize">{user?.role || 'Customer'}</p>
                             </div>
+                        </motion.div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Member Since
-                                </label>
-                                <p className="text-lg text-gray-900">
-                                    {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-IN', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                    }) : 'N/A'}
+                        {/* Security */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.1 }}
+                            className="bg-white rounded-2xl border border-[#D4AF37]/15 shadow-sm overflow-hidden"
+                        >
+                            <div className="px-6 py-4 border-b border-gray-100">
+                                <h2 className="font-bold text-gray-900 flex items-center gap-2 text-base"
+                                    style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                                    <ShieldCheck size={18} className="text-[#D4AF37]" />
+                                    Security
+                                </h2>
+                            </div>
+                            <div className="p-6 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-1.5">Password</p>
+                                    <p className="text-gray-700 font-semibold text-sm tracking-widest">••••••••••</p>
+                                </div>
+                                <button
+                                    onClick={() => setIsChangePasswordOpen(true)}
+                                    className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#A94A4A] border border-[#A94A4A]/30 hover:border-[#A94A4A] hover:bg-[#A94A4A]/5 px-3 py-1.5 rounded-lg transition-all duration-200"
+                                >
+                                    <Lock size={12} />
+                                    Change
+                                </button>
+                            </div>
+                        </motion.div>
+
+                        {/* Address Book */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.2 }}
+                        >
+                            <AddressBook />
+                        </motion.div>
+                    </div>
+
+                    {/* ── Right: Status + Quick Actions ─────────────────────── */}
+                    <div className="space-y-5">
+
+                        {/* Account Status Card */}
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5 }}
+                            className="rounded-2xl overflow-hidden bg-gradient-to-br from-[#1a0a00] to-[#2d1200] border border-[#D4AF37]/20 shadow-lg"
+                        >
+                            <div className="p-6">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Crown size={18} className="text-[#D4AF37]" />
+                                    <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.2em]">Account Status</p>
+                                </div>
+                                <p className="text-3xl font-black text-[#FDFBF7] mb-1"
+                                    style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                                    {user?.is_active ? 'Active' : 'Inactive'}
                                 </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Security */}
-                    <div className="card mt-6">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                            <Lock className="mr-2" size={24} />
-                            Security
-                        </h2>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Password
-                                </label>
-                                <div className="flex items-center justify-between">
-                                    <p className="text-lg text-gray-900">••••••••</p>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setIsChangePasswordOpen(true)}
-                                    >
-                                        Change Password
-                                    </Button>
+                                <p className="text-gray-400 text-xs leading-relaxed">
+                                    {user?.is_active
+                                        ? 'Your account is in excellent standing.'
+                                        : 'Your account is currently deactivated.'}
+                                </p>
+                                <div className="mt-5 pt-4 border-t border-[#D4AF37]/15">
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">Member Since</p>
+                                    <p className="text-[#D4AF37] font-bold text-sm mt-0.5">{memberSince}</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
+                        </motion.div>
 
-                {/* Quick Stats */}
-                <div className="space-y-6">
-                    <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-                        <h3 className="font-semibold mb-2">Account Status</h3>
-                        <p className="text-3xl font-bold mb-1">
-                            {user?.is_active ? 'Active' : 'Inactive'}
-                        </p>
-                        <p className="text-sm text-white/80">
-                            {user?.is_active ? 'Your account is in good standing' : 'Account is deactivated'}
-                        </p>
-                    </div>
-
-                    <div className="card">
-                        <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                        <div className="space-y-2">
-                            <button
-                                onClick={() => navigate('/orders')}
-                                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                                <p className="font-medium text-gray-900">Order History</p>
-                                <p className="text-sm text-gray-600">View all your orders</p>
-                            </button>
-                            <button 
-                                onClick={() => navigate('/wishlist')}
-                                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                                <p className="font-medium text-gray-900">Wishlist</p>
-                                <p className="text-sm text-gray-600">View saved products</p>
-                            </button>
-                        </div>
+                        {/* Quick Actions */}
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: 0.1 }}
+                            className="bg-white rounded-2xl border border-[#D4AF37]/15 shadow-sm overflow-hidden"
+                        >
+                            <div className="px-6 py-4 border-b border-gray-100">
+                                <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider">Quick Actions</h3>
+                            </div>
+                            <div className="divide-y divide-gray-50">
+                                {[
+                                    { icon: Package, label: 'Order History', sub: 'View all your orders', path: '/orders', color: '#A94A4A' },
+                                    { icon: Heart, label: 'Wishlist', sub: 'View saved products', path: '/wishlist', color: '#D4AF37' },
+                                ].map(({ icon: Icon, label, sub, path, color }) => (
+                                    <button
+                                        key={label}
+                                        onClick={() => navigate(path)}
+                                        className="w-full flex items-center gap-4 px-6 py-4 hover:bg-[#FDFBF7] group transition-colors duration-200"
+                                    >
+                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200"
+                                            style={{ background: `${color}15` }}>
+                                            <Icon size={16} style={{ color }} />
+                                        </div>
+                                        <div className="flex-1 text-left">
+                                            <p className="font-bold text-gray-900 text-sm">{label}</p>
+                                            <p className="text-gray-400 text-xs">{sub}</p>
+                                        </div>
+                                        <ChevronRight size={15} className="text-gray-300 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all" />
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
             </div>
 
-            {/* Address Book Section */}
-            <div className="mt-8">
-                <AddressBook />
-            </div>
-
-            {/* Change Password Modal */}
+            {/* ── Change Password Modal ─────────────────────────────────────── */}
             <Modal
                 isOpen={isChangePasswordOpen}
-                onClose={() => {
-                    setIsChangePasswordOpen(false);
-                    resetPassword();
-                }}
+                onClose={() => { setIsChangePasswordOpen(false); resetPassword(); }}
                 title="Change Password"
             >
                 <form onSubmit={handlePasswordSubmit(handleChangePassword)} className="space-y-4">
@@ -229,11 +299,8 @@ const ProfilePage = () => {
                         type="password"
                         icon={Lock}
                         error={passwordErrors.old_password?.message}
-                        {...registerPassword('old_password', {
-                            required: 'Current password is required',
-                        })}
+                        {...registerPassword('old_password', { required: 'Current password is required' })}
                     />
-
                     <Input
                         label="New Password"
                         type="password"
@@ -241,29 +308,20 @@ const ProfilePage = () => {
                         error={passwordErrors.new_password?.message}
                         {...registerPassword('new_password', {
                             required: 'New password is required',
-                            minLength: {
-                                value: 8,
-                                message: 'Password must be at least 8 characters',
-                            },
+                            minLength: { value: 8, message: 'Password must be at least 8 characters' },
                             pattern: {
                                 value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                                message: 'Password must contain uppercase, lowercase, and number',
+                                message: 'Must contain uppercase, lowercase, and number',
                             },
                         })}
                     />
-
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        className="w-full"
-                        isLoading={isLoading}
-                        icon={Save}
-                    >
+                    <Button type="submit" variant="primary" className="w-full" isLoading={isLoading} icon={Save}>
                         Change Password
                     </Button>
                 </form>
             </Modal>
-            {/* Edit Profile Modal */}
+
+            {/* ── Edit Profile Modal ────────────────────────────────────────── */}
             <Modal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
@@ -280,7 +338,6 @@ const ProfilePage = () => {
                             minLength: { value: 3, message: 'Name must be at least 3 characters' }
                         })}
                     />
-
                     <Input
                         label="Email Address"
                         type="email"
@@ -288,13 +345,9 @@ const ProfilePage = () => {
                         error={profileErrors.email?.message}
                         {...registerProfile('email', {
                             required: 'Email is required',
-                            pattern: {
-                                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                message: 'Invalid email address'
-                            }
+                            pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Invalid email address' }
                         })}
                     />
-
                     <Input
                         label="Phone Number"
                         type="tel"
@@ -302,20 +355,10 @@ const ProfilePage = () => {
                         error={profileErrors.phone?.message}
                         {...registerProfile('phone', {
                             required: 'Phone number is required',
-                            pattern: {
-                                value: /^[0-9]{10}$/,
-                                message: 'Invalid phone number (must be 10 digits)'
-                            }
+                            pattern: { value: /^[0-9]{10}$/, message: 'Must be 10 digits' }
                         })}
                     />
-
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        className="w-full"
-                        isLoading={isUpdatingProfile}
-                        icon={Save}
-                    >
+                    <Button type="submit" variant="primary" className="w-full" isLoading={isUpdatingProfile} icon={Save}>
                         Save Changes
                     </Button>
                 </form>

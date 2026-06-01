@@ -4,12 +4,13 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowUpDown, Check, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { productsAPI, categoriesAPI } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ui/Skeleton';
 import HeroCarousel from '../components/HeroCarousel';
+import CategoryShowcase from '../components/CategoryShowcase';
 import Newsletter from '../components/Newsletter';
 
 const Home = () => {
@@ -115,54 +116,67 @@ const Home = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#FDFBF7]">
             {/* Hero Section */}
             <HeroCarousel />
 
+            {/* Category Showcase Section */}
+            <CategoryShowcase />
+
             {/* Filters & Products */}
-            <div id="products-section" className="container py-8 scroll-mt-20">
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Sidebar Filters */}
-                    <aside className="lg:w-64 space-y-6">
-                        <div className="card">
-                            <h3 className="font-semibold text-lg mb-4 flex items-center">
-                                <SlidersHorizontal className="mr-2" size={20} />
+            <div id="products-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16 scroll-mt-20">
+                <div className="flex flex-col lg:flex-row gap-10">
+
+                    {/* Sidebar Filters — desktop only */}
+                    <aside className="hidden lg:block lg:w-64 space-y-6 flex-shrink-0">
+                        <div className="bg-white rounded-2xl border border-[#D4AF37]/25 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <h3 className="font-bold text-[#A94A4A] text-lg uppercase tracking-wider mb-6 flex items-center border-b border-[#D4AF37]/25 pb-3" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                                <SlidersHorizontal className="mr-2.5 text-[#D4AF37]" size={18} />
                                 Filters
                             </h3>
 
                             {/* Categories */}
-                            <div className="mb-6">
-                                <h4 className="font-medium text-gray-700 mb-3">Category</h4>
-                                <div className="space-y-2">
-                                    <label className="flex items-center">
+                            <div className="mb-8">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">Category</h4>
+                                <div className="space-y-3">
+                                    <label className="flex items-center cursor-pointer group">
                                         <input
                                             type="radio"
                                             name="category"
                                             checked={!filters.category_id}
                                             onChange={() => handleFilterChange('category_id', '')}
-                                            className="mr-2"
+                                            className="hidden"
                                         />
-                                        <span className="text-gray-700">All Categories</span>
+                                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center mr-3 transition-all duration-300 ${!filters.category_id ? 'border-[#A94A4A] bg-[#A94A4A]/10 scale-105' : 'border-gray-300 group-hover:border-[#A94A4A]'}`}>
+                                            {!filters.category_id && <span className="w-1.5 h-1.5 rounded-full bg-[#A94A4A]" />}
+                                        </span>
+                                        <span className={`text-sm tracking-wide transition-colors ${!filters.category_id ? 'font-bold text-[#A94A4A]' : 'text-gray-600 group-hover:text-gray-900'}`}>All Collections</span>
                                     </label>
-                                    {categories.map((category) => (
-                                        <label key={category.id} className="flex items-center">
-                                            <input
-                                                type="radio"
-                                                name="category"
-                                                checked={filters.category_id == category.id}
-                                                onChange={() => handleFilterChange('category_id', category.id)}
-                                                className="mr-2"
-                                            />
-                                            <span className="text-gray-700">{category.name}</span>
-                                        </label>
-                                    ))}
+                                    {categories.map((category) => {
+                                        const isSelected = filters.category_id == category.id;
+                                        return (
+                                            <label key={category.id} className="flex items-center cursor-pointer group">
+                                                <input
+                                                    type="radio"
+                                                    name="category"
+                                                    checked={isSelected}
+                                                    onChange={() => handleFilterChange('category_id', category.id)}
+                                                    className="hidden"
+                                                />
+                                                <span className={`w-4 h-4 rounded-full border flex items-center justify-center mr-3 transition-all duration-300 ${isSelected ? 'border-[#A94A4A] bg-[#A94A4A]/10 scale-105' : 'border-gray-300 group-hover:border-[#A94A4A]'}`}>
+                                                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#A94A4A]" />}
+                                                </span>
+                                                <span className={`text-sm tracking-wide transition-colors ${isSelected ? 'font-bold text-[#A94A4A]' : 'text-gray-600 group-hover:text-gray-900'}`}>{category.name}</span>
+                                            </label>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
                             {/* Sort */}
-                            <div>
-                                <h4 className="font-medium text-gray-700 mb-3 flex items-center">
-                                    <ArrowUpDown className="mr-2" size={18} />
+                            <div className="mb-6">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center">
+                                    <ArrowUpDown className="mr-2 text-[#D4AF37]" size={14} />
                                     Sort By
                                 </h4>
                                 <select
@@ -172,7 +186,7 @@ const Home = () => {
                                         handleFilterChange('sort_by', sortBy);
                                         handleFilterChange('sort_order', sortOrder);
                                     }}
-                                    className="w-full input"
+                                    className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all"
                                 >
                                     <option value="created_at_desc">Newest First</option>
                                     <option value="created_at_asc">Oldest First</option>
@@ -184,47 +198,85 @@ const Home = () => {
                             </div>
 
                             {/* Featured */}
-                            <div className="pt-4 border-t border-gray-200">
-                                <label className="flex items-center">
+                            <div className="pt-5 border-t border-gray-100">
+                                <label className="flex items-center cursor-pointer group">
                                     <input
                                         type="checkbox"
                                         checked={filters.is_featured === true}
                                         onChange={(e) => handleFilterChange('is_featured', e.target.checked ? true : null)}
-                                        className="mr-2"
+                                        className="hidden"
                                     />
-                                    <span className="text-gray-700 font-medium">Featured Only</span>
+                                    <span className={`w-4 h-4 rounded border flex items-center justify-center mr-3 transition-all duration-300 ${filters.is_featured === true ? 'border-[#A94A4A] bg-[#A94A4A] text-white scale-105' : 'border-gray-300 group-hover:border-[#A94A4A]'}`}>
+                                        {filters.is_featured === true && <Check size={12} strokeWidth={3} />}
+                                    </span>
+                                    <span className={`text-sm tracking-wide transition-colors ${filters.is_featured === true ? 'font-bold text-[#A94A4A]' : 'text-gray-600 group-hover:text-gray-900'}`}>Featured Only</span>
                                 </label>
                             </div>
                         </div>
                     </aside>
 
                     {/* Products Grid */}
-                    <main className="flex-1">
+                    <main className="flex-grow min-w-0">
                         {/* Search Bar */}
-                        <div className="mb-6 relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <div className="mb-4 relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors" size={18} />
                             <input
                                 type="text"
                                 value={filters.search}
                                 onChange={(e) => handleSearchChange(e.target.value)}
-                                placeholder="Search for products..."
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm transition-all"
+                                placeholder="Search our premium boutique collections..."
+                                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-[#D4AF37]/20 bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] shadow-sm transition-all text-sm tracking-wide"
                             />
                         </div>
 
+                        {/* ── Mobile Sort Pills (hidden on lg+) ─────────────── */}
+                        <div className="lg:hidden mb-5 -mx-1">
+                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-1">
+                                {[
+                                    { label: 'Newest',        sort_by: 'created_at', sort_order: 'desc' },
+                                    { label: 'Oldest',        sort_by: 'created_at', sort_order: 'asc'  },
+                                    { label: 'Price ↑',       sort_by: 'price',      sort_order: 'asc'  },
+                                    { label: 'Price ↓',       sort_by: 'price',      sort_order: 'desc' },
+                                    { label: 'A → Z',         sort_by: 'name',       sort_order: 'asc'  },
+                                    { label: 'Z → A',         sort_by: 'name',       sort_order: 'desc' },
+                                ].map(({ label, sort_by, sort_order }) => {
+                                    const isActive = filters.sort_by === sort_by && filters.sort_order === sort_order;
+                                    return (
+                                        <button
+                                            key={label}
+                                            onClick={() => {
+                                                handleFilterChange('sort_by', sort_by);
+                                                handleFilterChange('sort_order', sort_order);
+                                            }}
+                                            className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all duration-200 whitespace-nowrap ${
+                                                isActive
+                                                    ? 'bg-[#1a0a00] text-[#D4AF37] border-[#1a0a00] shadow-sm'
+                                                    : 'bg-white text-gray-600 border-[#D4AF37]/30 hover:border-[#D4AF37] hover:text-[#1a0a00]'
+                                            }`}
+                                        >
+                                            {label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         {/* Results Header */}
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-2xl font-bold text-gray-900">
-                                {filters.search ? `Search results for "${filters.search}"` : 'Shop Collection'}
+                        <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-100">
+                            <h2
+                                className="text-lg md:text-2xl font-bold text-gray-900 tracking-wide"
+                                style={{ fontFamily: '"Times New Roman", Times, serif' }}
+                            >
+                                {filters.search ? `Results for "${filters.search}"` : 'Shop Collection'}
                             </h2>
-                            <p className="text-gray-600">
-                                {pagination.total} product{pagination.total !== 1 ? 's' : ''}
+                            <p className="text-sm font-semibold text-gray-400">
+                                {pagination.total} item{pagination.total !== 1 ? 's' : ''}
                             </p>
                         </div>
 
                         {/* Products Grid */}
                         {loading ? (
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[...Array(8)].map((_, i) => (
                                     <ProductCardSkeleton key={i} />
                                 ))}
@@ -238,7 +290,7 @@ const Home = () => {
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
                                         transition={{ duration: 0.3 }}
-                                        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+                                        className="grid grid-cols-2 lg:grid-cols-4 gap-6"
                                     >
                                         {products.map((product) => (
                                             <ProductCard key={product.id} product={product} />
@@ -248,21 +300,21 @@ const Home = () => {
 
                                 {/* Pagination */}
                                 {pagination.pages > 1 && (
-                                    <div className="flex justify-center gap-2 mt-8">
+                                    <div className="flex justify-center items-center gap-2 mt-12 pt-6 border-t border-gray-100">
                                         <button
                                             onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
                                             disabled={pagination.page === 1}
-                                            className="btn btn-outline disabled:opacity-50"
+                                            className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                                         >
                                             Previous
                                         </button>
-                                        <span className="flex items-center px-4 py-2 text-gray-700">
+                                        <span className="text-xs font-bold tracking-widest uppercase text-gray-400 px-4">
                                             Page {pagination.page} of {pagination.pages}
                                         </span>
                                         <button
                                             onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.pages, prev.page + 1) }))}
                                             disabled={pagination.page === pagination.pages}
-                                            className="btn btn-outline disabled:opacity-50"
+                                            className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                                         >
                                             Next
                                         </button>
@@ -270,8 +322,8 @@ const Home = () => {
                                 )}
                             </>
                         ) : (
-                            <div className="text-center py-16">
-                                <p className="text-gray-500 text-lg">No products found</p>
+                            <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                                <p className="text-gray-400 font-semibold mb-4">No products found matching your selection.</p>
                                 <button
                                     onClick={() => {
                                         setFilters({
@@ -283,8 +335,9 @@ const Home = () => {
                                         });
                                         setSearchParams({});
                                     }}
-                                    className="btn btn-primary mt-4"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#A94A4A] text-[#A94A4A] hover:bg-[#A94A4A] hover:text-white rounded-full font-bold text-xs uppercase tracking-wider transition-all duration-300"
                                 >
+                                    <RefreshCw size={14} />
                                     Clear Filters
                                 </button>
                             </div>
