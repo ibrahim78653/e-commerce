@@ -24,19 +24,15 @@ def generate_icons():
     apple_img.save(apple_icon_path, format="PNG")
     print(f"Generated apple-touch-icon.png at {apple_icon_path}")
     
-    # 3. Generate pwa-192x192.png
-    pwa_192_path = os.path.join(public_dir, "pwa-192x192.png")
-    pwa_192_img = img.resize((192, 192), Image.Resampling.LANCZOS)
-    pwa_192_img.save(pwa_192_path, format="PNG")
-    print(f"Generated pwa-192x192.png at {pwa_192_path}")
-    
-    # 4. Generate pwa-512x512.png
-    pwa_512_path = os.path.join(public_dir, "pwa-512x512.png")
-    pwa_512_img = img.resize((512, 512), Image.Resampling.LANCZOS)
-    pwa_512_img.save(pwa_512_path, format="PNG")
-    print(f"Generated pwa-512x512.png at {pwa_512_path}")
-    
-    # 5. Create a basic mask-group.svg
+    # 3. Generate all other required sizes
+    sizes = [72, 96, 128, 144, 152, 192, 384, 512]
+    for size in sizes:
+        pwa_path = os.path.join(public_dir, f"pwa-{size}x{size}.png")
+        pwa_img = img.resize((size, size), Image.Resampling.LANCZOS)
+        pwa_img.save(pwa_path, format="PNG")
+        print(f"Generated pwa-{size}x{size}.png at {pwa_path}")
+        
+    # 4. Create a basic mask-group.svg
     svg_path = os.path.join(public_dir, "mask-group.svg")
     svg_content = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <circle cx="256" cy="256" r="240" fill="#ffffff" stroke="#A94A4A" stroke-width="16"/>

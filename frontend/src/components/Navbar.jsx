@@ -55,20 +55,14 @@ const Navbar = () => {
     const isTransparent = isHomePage && !isScrolled;
     
     const navBgClass = isTransparent
-        ? 'bg-transparent text-white border-transparent'
+        ? 'bg-[#FDFBF7]/75 backdrop-blur-md text-gray-900 border-b border-[#D4AF37]/10'
         : 'bg-[#FDFBF7]/85 backdrop-blur-lg text-gray-900 border-b border-[#D4AF37]/20 shadow-md shadow-[#1a0a00]/5';
 
-    const textLinkClass = isTransparent
-        ? 'text-white/80 hover:text-white hover:text-shadow-sm'
-        : 'text-gray-700 hover:text-[#A94A4A]';
+    const textLinkClass = 'text-gray-700 hover:text-[#A94A4A]';
 
-    const iconButtonClass = isTransparent
-        ? 'text-white/80 hover:text-white hover:bg-white/10'
-        : 'text-gray-700 hover:text-[#A94A4A] hover:bg-[#1a0a00]/5';
+    const iconButtonClass = 'text-gray-700 hover:text-[#A94A4A] hover:bg-[#1a0a00]/5';
 
-    const logoTextClass = isTransparent
-        ? 'text-white'
-        : 'text-[#A94A4A]';
+    const logoTextClass = 'text-[#A94A4A]';
 
     return (
         <nav className={`sticky top-0 z-50 transition-all duration-500 ease-out ${navBgClass}`}>
@@ -76,12 +70,12 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-20">
                     
                     {/* Brand Logo & Name */}
-                    <Link to="/" className="flex items-center space-x-3 group">
-                        <div className="relative">
+                    <Link to="/" className="flex items-center space-x-3 group flex-shrink-0">
+                        <div className="relative shrink-0">
                             <img 
                                 src="/logo-best.jpeg" 
                                 alt="Burhani Collection" 
-                                className="w-12 h-12 object-cover rounded-full border border-[#D4AF37] transition-all duration-500 group-hover:scale-105 group-hover:border-[#D4AF37] group-hover:shadow-[0_0_15px_rgba(212,175,55,0.4)]"
+                                className="w-12 h-12 object-cover rounded-full border border-[#D4AF37] transition-all duration-500 group-hover:scale-105 group-hover:border-[#D4AF37] group-hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] shrink-0"
                             />
                             <div className="absolute inset-0 rounded-full border border-white/10 scale-90 group-hover:scale-110 transition-transform duration-500" />
                         </div>
@@ -153,10 +147,10 @@ const Navbar = () => {
                             <div className="relative">
                                 <button
                                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                    className={`flex items-center space-x-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-full border border-transparent transition-all duration-300 ${isTransparent ? 'bg-white/10 hover:bg-white/20' : 'bg-[#1a0a00]/5 hover:bg-[#1a0a00]/10'}`}
+                                    className="flex items-center space-x-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-full border border-transparent transition-all duration-300 bg-[#1a0a00]/5 hover:bg-[#1a0a00]/10"
                                 >
-                                    <UserCircle size={20} className={isTransparent ? 'text-white' : 'text-gray-700'} />
-                                    <span className={`hidden sm:block text-xs font-semibold uppercase tracking-wider ${isTransparent ? 'text-white' : 'text-gray-700'}`}>
+                                    <UserCircle size={20} className="text-gray-700" />
+                                    <span className="hidden sm:block text-xs font-semibold uppercase tracking-wider text-gray-700">
                                         {user?.full_name?.split(' ')[0] || 'Account'}
                                     </span>
                                 </button>
@@ -229,7 +223,7 @@ const Navbar = () => {
                             </div>
                         ) : (
                             <Link to="/login">
-                                <button className={`px-5 py-2 rounded-full font-bold uppercase tracking-wider text-xs border transition-all duration-300 ${isTransparent ? 'border-white text-white hover:bg-white hover:text-black shadow-lg shadow-white/5' : 'border-[#A94A4A] text-[#A94A4A] hover:bg-[#A94A4A] hover:text-white shadow-md shadow-[#A94A4A]/10'}`}>
+                                <button className="px-5 py-2 rounded-full font-bold uppercase tracking-wider text-xs border border-[#A94A4A] text-[#A94A4A] hover:bg-[#A94A4A] hover:text-white shadow-md shadow-[#A94A4A]/10 transition-all duration-300">
                                     Sign In
                                 </button>
                             </Link>

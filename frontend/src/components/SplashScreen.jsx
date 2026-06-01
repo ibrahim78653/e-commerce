@@ -70,6 +70,9 @@ const SplashScreen = ({ onComplete }) => {
               fontFamily: '"Times New Roman", Times, serif',
               fontSize: 'clamp(22px, 5vw, 38px)',
               letterSpacing: '0.35em',
+              paddingLeft: '0.35em',
+              padding: '0 20px',
+              textAlign: 'center',
               color: '#D4AF37',
               textTransform: 'uppercase',
               margin: '0 0 10px 0',
@@ -103,6 +106,8 @@ const SplashScreen = ({ onComplete }) => {
               fontSize: 'clamp(12px, 2vw, 15px)',
               color: 'rgba(212,175,55,0.75)',
               letterSpacing: '0.25em',
+              paddingLeft: '0.25em',
+              textAlign: 'center',
               fontStyle: 'italic',
               margin: 0,
             }}
