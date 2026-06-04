@@ -3,8 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#ffffff" />
+    
+    <!-- Lock Screen Zoom (PC & Mobile) -->
+    <script>
+      // Prevent ctrl/cmd + zoom hotkeys and mouse wheel zoom on PC
+      document.addEventListener('wheel', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && 
+            (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) {
+          e.preventDefault();
+        }
+      });
+
+      // Prevent pinch-to-zoom gestures on mobile devices
+      document.addEventListener('touchmove', function(e) {
+        if (e.touches.length > 1) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      // Prevent double-tap zoom
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', function(e) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+          e.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, false);
+
+      // Prevent pinch-to-zoom gestures on macOS Safari
+      document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+      });
+    </script>
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="Burhani Collection - Where Style Meets Tradition. Premium fashion and collection." />

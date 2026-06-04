@@ -2,47 +2,19 @@
  * Shopping Cart Page - Luxury Redesign
  * Burhani Collection — Premium Boutique
  */
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, X, CheckCircle, Sparkles } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import CONFIG from '../config';
-import { promosAPI } from '../services/api';
-import toast from 'react-hot-toast';
 
 const CartPage = () => {
     const navigate = useNavigate();
     const { cart, removeFromCart, updateQuantity, getTotal, getShippingCost, getGrandTotal, clearCart } = useCart();
 
-    const [promoCode, setPromoCode] = useState('');
-    const [appliedPromo, setAppliedPromo] = useState(null);
-    const [promoLoading, setPromoLoading] = useState(false);
-
     const total = getTotal();
     const shippingCost = getShippingCost();
-    const discountAmount = appliedPromo?.discount_amount || 0;
-    const grandTotal = Math.max(getGrandTotal() - discountAmount, 0);
-
-    const applyPromo = async () => {
-        if (!promoCode.trim()) return;
-        setPromoLoading(true);
-        try {
-            const res = await promosAPI.validate({ code: promoCode.trim(), order_value: getGrandTotal() });
-            setAppliedPromo(res.data);
-            toast.success(res.data.message);
-        } catch (err) {
-            // error toast handled by interceptor
-        } finally {
-            setPromoLoading(false);
-        }
-    };
-
-    const removePromo = () => {
-        setAppliedPromo(null);
-        setPromoCode('');
-        toast('Promo code removed', { icon: '🗑️' });
-    };
+    const grandTotal = getGrandTotal();
 
     // ── Empty State ──────────────────────────────────────────────────────────
     if (cart.length === 0) {
@@ -267,18 +239,6 @@ const CartPage = () => {
                                             ✨ Add ₹{(1200 - total).toLocaleString()} more for free royal shipping!
                                         </p>
                                     )}
-                                    {appliedPromo && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            className="flex justify-between text-green-600 font-semibold text-sm"
-                                        >
-                                            <span className="flex items-center gap-1">
-                                                <Tag size={13} /> Promo ({appliedPromo.code})
-                                            </span>
-                                            <span>-₹{appliedPromo.discount_amount.toFixed(2)}</span>
-                                        </motion.div>
-                                    )}
                                 </div>
 
                                 {/* Grand Total */}
@@ -287,50 +247,9 @@ const CartPage = () => {
                                     <span className="text-xl font-bold text-[#1a0a00]">₹{grandTotal.toLocaleString()}</span>
                                 </div>
 
-                                {/* Promo Code */}
-                                {!appliedPromo ? (
-                                    <div className="mb-5">
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                                            <Tag size={12} className="inline mr-1.5" />
-                                            Promo Code
-                                        </label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={promoCode}
-                                                onChange={e => setPromoCode(e.target.value.toUpperCase())}
-                                                onKeyDown={e => e.key === 'Enter' && applyPromo()}
-                                                placeholder="Enter code"
-                                                className="flex-1 border border-[#D4AF37]/30 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] bg-[#FDFBF7] font-medium tracking-widest uppercase text-gray-700 placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 transition-all"
-                                            />
-                                            <button
-                                                onClick={applyPromo}
-                                                disabled={promoLoading || !promoCode.trim()}
-                                                className="px-4 py-2 bg-[#1a0a00] text-[#D4AF37] rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#2d1200] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                                            >
-                                                {promoLoading ? '…' : 'Apply'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="mb-5 flex items-center justify-between bg-green-50 border border-green-200 rounded-xl p-3"
-                                    >
-                                        <div className="flex items-center gap-2 text-green-700">
-                                            <CheckCircle size={16} />
-                                            <span className="text-sm font-bold">{appliedPromo.code} applied!</span>
-                                        </div>
-                                        <button onClick={removePromo} className="text-green-400 hover:text-red-500 transition-colors">
-                                            <X size={16} />
-                                        </button>
-                                    </motion.div>
-                                )}
-
                                 {/* Checkout CTA */}
                                 <button
-                                    onClick={() => navigate('/checkout', { state: { appliedPromo, discountedTotal: grandTotal } })}
+                                    onClick={() => navigate('/checkout', { state: { appliedPromo: null, discountedTotal: grandTotal } })}
                                     className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#1a0a00] text-[#D4AF37] font-bold text-sm uppercase tracking-[0.15em] rounded-xl hover:bg-[#2d1200] transition-all duration-300 shadow-lg shadow-[#1a0a00]/20 hover:shadow-xl mb-3 group"
                                 >
                                     <span>Proceed to Checkout</span>

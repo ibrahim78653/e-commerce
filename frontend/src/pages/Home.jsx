@@ -11,7 +11,6 @@ import ProductCard from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ui/Skeleton';
 import HeroCarousel from '../components/HeroCarousel';
 import CategoryShowcase from '../components/CategoryShowcase';
-import Newsletter from '../components/Newsletter';
 
 const Home = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -88,17 +87,32 @@ const Home = () => {
         loadProducts();
     }, [filters, pagination.page]);
 
-    const handleFilterChange = (key, value) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
+    const handleFilterChange = (keyOrUpdates, value) => {
+        const updates = typeof keyOrUpdates === 'string'
+            ? { [keyOrUpdates]: value }
+            : keyOrUpdates;
+
+        setFilters(prev => ({ ...prev, ...updates }));
         setPagination(prev => ({ ...prev, page: 1 }));
 
-        // Update URL params
+        // Map filter keys to URL param keys
+        const MAP_KEYS = {
+            search: 'search',
+            category_id: 'category_id',
+            sort_by: 'sort',
+            sort_order: 'order',
+            is_featured: 'featured'
+        };
+
         const params = new URLSearchParams(searchParams);
-        if (value) {
-            params.set(key, value);
-        } else {
-            params.delete(key);
-        }
+        Object.entries(updates).forEach(([key, val]) => {
+            const urlKey = MAP_KEYS[key] || key;
+            if (val !== null && val !== '') {
+                params.set(urlKey, String(val));
+            } else {
+                params.delete(urlKey);
+            }
+        });
         setSearchParams(params);
     };
 
@@ -183,8 +197,7 @@ const Home = () => {
                                     value={`${filters.sort_by}_${filters.sort_order}`}
                                     onChange={(e) => {
                                         const [sortBy, sortOrder] = e.target.value.split('_');
-                                        handleFilterChange('sort_by', sortBy);
-                                        handleFilterChange('sort_order', sortOrder);
+                                        handleFilterChange({ sort_by: sortBy, sort_order: sortOrder });
                                     }}
                                     className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all"
                                 >
@@ -245,8 +258,7 @@ const Home = () => {
                                         <button
                                             key={label}
                                             onClick={() => {
-                                                handleFilterChange('sort_by', sort_by);
-                                                handleFilterChange('sort_order', sort_order);
+                                                handleFilterChange({ sort_by, sort_order });
                                             }}
                                             className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all duration-200 whitespace-nowrap ${
                                                 isActive
@@ -345,9 +357,6 @@ const Home = () => {
                     </main>
                 </div>
             </div>
-            
-            {/* Newsletter Section */}
-            <Newsletter />
         </div>
     );
 };

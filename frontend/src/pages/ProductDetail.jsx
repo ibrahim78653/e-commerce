@@ -300,20 +300,30 @@ const ProductDetail = () => {
                             onSelect={(index) => setSelectedImage(index)}
                             className="bg-transparent rounded-2xl overflow-hidden shadow-inner"
                         >
-                            {currentImages.map((image, index) => (
-                                <Carousel.Item key={index} className="h-[480px]">
+                            {currentImages.length > 0 ? (
+                                currentImages.map((image, index) => (
+                                    <Carousel.Item key={index} className="h-[480px]">
+                                        <img
+                                            src={
+                                                image.image_url?.startsWith('http')
+                                                    ? image.image_url
+                                                    : `${CONFIG.IMAGE_BASE_URL}${image.image_url || '/placeholder.jpg'}`
+                                            }
+                                            alt={`${product.name} ${index + 1}`}
+                                            className="w-full h-full object-contain"
+                                            onError={(e) => { e.target.src = CONFIG.PLACEHOLDER_URL; }}
+                                        />
+                                    </Carousel.Item>
+                                ))
+                            ) : (
+                                <Carousel.Item className="h-[480px]">
                                     <img
-                                        src={
-                                            image.image_url?.startsWith('http')
-                                                ? image.image_url
-                                                : `${CONFIG.IMAGE_BASE_URL}${image.image_url || '/placeholder.jpg'}`
-                                        }
-                                        alt={`${product.name} ${index + 1}`}
+                                        src={CONFIG.PLACEHOLDER_URL}
+                                        alt={product.name}
                                         className="w-full h-full object-contain"
-                                        onError={(e) => { e.target.src = CONFIG.PLACEHOLDER_URL; }}
                                     />
                                 </Carousel.Item>
-                            ))}
+                            )}
                         </Carousel>
                     </div>
 

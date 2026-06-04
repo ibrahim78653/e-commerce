@@ -24,7 +24,7 @@ const ProductCard = ({ product }) => {
     const hasDiscount = product.discounted_price && product.discounted_price < product.original_price;
 
     // Get first image or placeholder
-    const imageUrl = product.images?.[0]?.image_url || '/placeholder.jpg';
+    const imageUrl = product.images?.[0]?.image_url || CONFIG.PLACEHOLDER_URL;
     const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `${CONFIG.IMAGE_BASE_URL}${imageUrl}`;
 
     const carouselVariants = product.color_variants?.filter(v => v.show_in_carousel && v.images?.length > 0) || [];

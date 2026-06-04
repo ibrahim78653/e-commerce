@@ -22,6 +22,7 @@
 
   html {
     @apply scroll-smooth;
+    touch-action: pan-x pan-y;
   }
 
   body {

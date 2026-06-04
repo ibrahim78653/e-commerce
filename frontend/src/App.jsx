@@ -3,7 +3,7 @@
  * Routes and context providers
  */
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 
@@ -32,6 +32,17 @@ import { useState, useEffect } from 'react';
 import useAuthStore from './store/authStore';
 import SplashScreen from './components/SplashScreen';
 
+// Scroll to top on route change
+function ScrollToTop() {
+    const { pathname } = useLocation();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [pathname]);
+
+    return null;
+}
+
 function App() {
     const { loadUser } = useAuthStore();
     const [showSplash, setShowSplash] = useState(true);
@@ -42,6 +53,7 @@ function App() {
 
     return (
         <BrowserRouter>
+            <ScrollToTop />
             <CartProvider>
                 <div className="min-h-screen bg-[#FDFBF7]">
                     <SplashScreen onComplete={() => setShowSplash(false)} />
